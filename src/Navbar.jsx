@@ -38,6 +38,11 @@ const Navbar = () => {
                 Returns File Upload
               </Link>
             </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/tasks">
+                Tasks
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
