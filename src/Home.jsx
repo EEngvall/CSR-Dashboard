@@ -1,0 +1,16 @@
+// Home.js, About.js, Contact.js
+
+import React from "react";
+
+const Home = () => {
+  return (
+    <div>
+      <h2>Home</h2>
+      <p>Welcome to the Home page!</p>
+    </div>
+  );
+};
+
+export default Home;
+
+// Similar structure for About.js and Contact.js
