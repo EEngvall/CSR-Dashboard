@@ -254,4 +254,4 @@ function FileUpload() {
   );
 }
 
-export default React.memo(FileUpload);
+export default FileUpload;

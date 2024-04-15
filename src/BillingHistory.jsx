@@ -59,7 +59,6 @@ const BillingHistory = () => {
         header: true,
         complete: (result) => {
           const parsedData = result.data;
-          console.log("Parsed data:", parsedData);
           calculateAverages(parsedData);
           setFileUploaded(true);
         },
@@ -122,8 +121,6 @@ const BillingHistory = () => {
       });
     });
 
-    console.log("Monthly Averages:", monthlyAverages);
-    console.log("Monthly Averages by Year:", monthlyAveragesByYear);
 
     setOverallAverage(calculateOverallAverage(monthlyAverages));
     setMonthlyAverages(monthlyAverages);
@@ -245,4 +242,4 @@ const BillingHistory = () => {
   );
 };
 
-export default React.memo(BillingHistory);
+export default BillingHistory;

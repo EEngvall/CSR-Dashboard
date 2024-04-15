@@ -37,12 +37,29 @@ const TaskList = () => {
 
   // Function to add a group of tasks
   const addGroupOfTasks = () => {
+    const currentDate = new Date().toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+    }); // Get current date in MM/DD/YYYY format
     const groupOfTasks = [
-      { name: "Returns ", completed: false, timestamp: null },
-      { name: "Daily IMDs", completed: false, timestamp: null },
-      { name: "Additional Bills", completed: false, timestamp: null },
-      { name: "Help Channel", completed: false, timestamp: null },
-
+      { name: "Returns " + currentDate, completed: false, timestamp: null },
+      {
+        name: "Returns Assignments " + currentDate,
+        completed: false,
+        timestamp: null,
+      },
+      { name: "Daily IMDs " + currentDate, completed: false, timestamp: null },
+      {
+        name: "Additional Bills " + currentDate,
+        completed: false,
+        timestamp: null,
+      },
+      {
+        name: "Help Channel " + currentDate,
+        completed: false,
+        timestamp: null,
+      },
       // Add more tasks as needed
     ];
     setTasks([...tasks, ...groupOfTasks]);
@@ -83,11 +100,11 @@ const TaskList = () => {
           Add Daily Tasks
         </button>
       </div>
-      <table className="table">
+      <table className="table table-striped">
         <thead>
           <tr>
-            <th scope="col">Task</th>
-            <th scope="col">Actions</th>
+            <th>Task</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
