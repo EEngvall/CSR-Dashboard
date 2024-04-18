@@ -6,6 +6,8 @@ import BillingHistory from "./BillingHistory";
 import FileUpload from "./FileUpload";
 import TaskList from "./TaskList";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import WorkOrderTracker from "./WorkOrders/WorkOrderTracker";
 
 const App = () => {
   return (
@@ -19,6 +21,7 @@ const App = () => {
             <Route path="/billingHistory" element={<BillingHistory />} />
             <Route path="/returns" element={<FileUpload />} />
             <Route path="/tasks" element={<TaskList />} />
+            <Route path="/workOrders" element={<WorkOrderTracker />} />
           </Routes>
         </div>
       </div>
