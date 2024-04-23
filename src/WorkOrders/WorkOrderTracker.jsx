@@ -228,6 +228,30 @@ const WorkOrderTracker = () => {
     setCases(newCases);
   };
 
+  // Function to export cases data to a JSON file
+  const handleExportData = () => {
+    const data = JSON.stringify(cases, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "CSR_WORK_ORDER_CASES.json"; // Set the file name here
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Function to handle file import
+  const handleImportData = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const importedCases = JSON.parse(e.target.result);
+      setCases(importedCases);
+      localStorage.setItem("cases", JSON.stringify(importedCases));
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="container mt-4">
       <h2 className="text-center">Work Order Tracker</h2>
@@ -364,19 +388,39 @@ const WorkOrderTracker = () => {
               <div key={index} className="d-flex align-items-center mb-2">
                 <div>{note}</div>
                 <button
-                  className="btn btn-sm btn-outline-danger ms-2"
+                  className="btn btn-sm btn-close ms-2"
                   onClick={() => handleRemoveNote(item.id, index)}
-                >
-                  Remove
-                </button>
+                ></button>
               </div>
             ))}
           </div>
         </div>
       ))}
-      <button className="btn btn-primary" onClick={handleAddCase}>
+      <button className="btn btn-primary mb-5" onClick={handleAddCase}>
         Add Case
       </button>
+      <div className="mb-3">
+        <div>
+          <button
+            className="btn btn-outline-success mb-3"
+            onClick={handleExportData}
+          >
+            Export Data
+          </button>
+        </div>
+
+        <label htmlFor="fileInput" className="form-label">
+          Select JSON to Import:
+        </label>
+        <input
+          type="file"
+          accept=".json"
+          id="fileInput"
+          onChange={handleImportData}
+          className="form-control"
+        />
+      </div>
+
       {/* History Offcanvas */}
       <Offcanvas show={showHistory} onHide={handleCloseHistory}>
         <Offcanvas.Header closeButton>
