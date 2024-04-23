@@ -230,12 +230,14 @@ const WorkOrderTracker = () => {
 
   // Function to export cases data to a JSON file
   const handleExportData = () => {
+    const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
     const data = JSON.stringify(cases, null, 2);
+    const fileName = `CSR_WORK_ORDER_CASES_${timestamp}.json`; // Add timestamp to file name
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "CSR_WORK_ORDER_CASES.json"; // Set the file name here
+    a.download = fileName; // Set the file name here
     a.click();
     URL.revokeObjectURL(url);
   };
