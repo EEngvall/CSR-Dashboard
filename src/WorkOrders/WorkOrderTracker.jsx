@@ -63,7 +63,12 @@ const WorkOrderTracker = () => {
             ...item,
             addresses: [
               ...item.addresses,
-              { address: "", stage: "Address Received", history: [] }, // Initialize history array
+              {
+                caseId: "",
+                address: "",
+                stage: "Address Received",
+                history: [],
+              },
             ],
           }
         : item,
@@ -181,6 +186,22 @@ const WorkOrderTracker = () => {
     };
     setCases([...cases, newCase]);
     setNextCaseId(nextCaseId + 1);
+  };
+
+  const handleCaseIdChange = (caseId, addressIndex, event) => {
+    const newCases = cases.map((item) =>
+      item.id === caseId
+        ? {
+            ...item,
+            addresses: item.addresses.map((address, index) =>
+              index === addressIndex
+                ? { ...address, caseId: event.target.value }
+                : address,
+            ),
+          }
+        : item,
+    );
+    setCases(newCases);
   };
 
   const handleShowHistory = (caseId) => {
@@ -347,6 +368,13 @@ const WorkOrderTracker = () => {
                   </option>
                 ))}
               </select>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter Case ID"
+                value={address.caseId}
+                onChange={(event) => handleCaseIdChange(item.id, index, event)} // Add handleCaseIdChange function
+              />
               <button
                 className="btn btn-outline-danger"
                 type="button"
@@ -356,6 +384,7 @@ const WorkOrderTracker = () => {
               </button>
             </div>
           ))}
+
           <button
             className="btn btn-outline-secondary"
             type="button"
