@@ -229,6 +229,28 @@ const WorkOrderTracker = () => {
     setCurrentNote(event.target.value);
   };
 
+  // Function to handle copying addresses and case numbers to clipboard
+  const handleCopyAddresses = (caseId) => {
+    const currentCase = cases.find((item) => item.id === caseId);
+    const addressesString = currentCase.addresses
+      .map((address) => `${address.address}, Case ID: ${address.caseId}`)
+      .join("\n");
+    navigator.clipboard.writeText(addressesString);
+  };
+
+  const handleCopyCustomerContact = (address, caseId) => {
+    const textToCopy = `Created Case ID: ${caseId} for device install at ${address}`;
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        // Optional: Provide feedback to the user that the text has been copied
+        console.log("Text copied to clipboard:", textToCopy);
+      })
+      .catch((error) => {
+        console.error("Error copying text to clipboard:", error);
+      });
+  };
+
   // Function to add a note to the case
   const handleAddNote = (caseId) => {
     const timestamp = getCurrentTimestamp();
@@ -375,6 +397,14 @@ const WorkOrderTracker = () => {
                 value={address.caseId}
                 onChange={(event) => handleCaseIdChange(item.id, index, event)} // Add handleCaseIdChange function
               />
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  handleCopyCustomerContact(address.address, address.caseId)
+                }
+              >
+                Copy Customer Contact
+              </Button>
               <button
                 className="btn btn-outline-danger"
                 type="button"
@@ -397,6 +427,12 @@ const WorkOrderTracker = () => {
             onClick={() => handleCloseCase(item.id)}
           >
             Close Case
+          </button>
+          <button
+            className="btn custom-btn-blue btn-sm ms-2"
+            onClick={() => handleCopyAddresses(item.id)}
+          >
+            Copy Addresses/Cases
           </button>
           <button
             className="btn custom-btn-blue btn-sm ms-2"

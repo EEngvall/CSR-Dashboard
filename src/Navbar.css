@@ -1,0 +1,23 @@
+.custom-nav-blue {
+  background-color: #005e7d;
+  border-color: #005e7d; 
+  color: white; 
+}
+
+/* Increase specificity for .custom-nav-blue */
+nav.custom-nav-blue {
+  background-color: #005e7d;
+  border-color: #005e7d; 
+  color: white; 
+}
+
+/* Override styles for .navbar-brand within .custom-nav-blue */
+nav.custom-nav-blue .navbar-brand {
+  color: white;
+}
+
+/* Override styles for all li items within .navbar-nav */
+nav.custom-nav-blue .navbar-nav .nav-item .nav-link {
+  color: white;
+}
+
