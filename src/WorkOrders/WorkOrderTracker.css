@@ -1,0 +1,23 @@
+.custom-btn-blue {
+  color: #ffffff; /* Text color */
+  border-color: #005e7d; /* Border color */
+  background-color: #005e7d; /* Background color */
+}
+
+.custom-btn-blue:hover {
+  color: #ffffff; /* Text color on hover */
+  background-color: rgba(0, 94, 125, 0.5); /* Reduced opacity for hover */
+  border-color: #005e7d; /* Border color on hover */
+}
+
+.custom-btn-green {
+  color: #ffffff; /* Text color */
+  border-color: #acd038; /* Border color */
+  background-color: #acd038; /* Background color */
+}
+
+.custom-btn-green:hover {
+  color: #ffffff; /* Text color on hover */
+  background-color: rgba(172, 208, 56, 0.5); /* Reduced opacity for hover */
+  border-color: #acd038; /* Border color on hover */
+}

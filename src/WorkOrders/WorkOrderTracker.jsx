@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Offcanvas, Button, Table } from "react-bootstrap";
+import "./WorkOrderTracker.css";
 
 const WorkOrderTracker = () => {
   const [cases, setCases] = useState(() => {
@@ -26,12 +27,19 @@ const WorkOrderTracker = () => {
     "Engineer/Contractor Emailed",
   ];
 
-  // Load cases from local storage on mount
+  // Load cases from local storage on mount and initialize nextCaseId based on the highest existing case ID
   useEffect(() => {
     const savedCases = JSON.parse(localStorage.getItem("cases")) || [];
     setCases(savedCases);
-    // Set next case ID
-    setNextCaseId(savedCases.length + 1);
+
+    // Calculate the maximum ID from the loaded cases
+    const maxId = savedCases.reduce(
+      (max, caseItem) => Math.max(max, caseItem.id),
+      1,
+    );
+
+    // Initialize nextCaseId one greater than the maximum ID
+    setNextCaseId(maxId + 1);
   }, []);
 
   // Save cases to local storage whenever it changes
@@ -303,14 +311,14 @@ const WorkOrderTracker = () => {
           </p>
           <div>
             <button
-              className="btn btn-outline-success btn-sm me-2 mb-2"
+              className="btn custom-btn-green btn-sm me-2 mb-2"
               onClick={() => handleCaseStageChange(item.id, "previous")}
               disabled={item.stage === stages[0]}
             >
               Previous Stage
             </button>
             <button
-              className="btn btn-outline-success btn-sm mb-2"
+              className="btn custom-btn-green btn-sm mb-2"
               onClick={() => handleCaseStageChange(item.id, "next")}
               disabled={item.stage === stages[stages.length - 1]}
             >
@@ -362,7 +370,7 @@ const WorkOrderTracker = () => {
             Close Case
           </button>
           <button
-            className="btn btn-primary btn-sm ms-2"
+            className="btn custom-btn-blue btn-sm ms-2"
             onClick={() => handleToggleNoteInput(item.id)}
           >
             {showNoteInput === item.id ? "Cancel" : "Add Note"}
@@ -398,13 +406,13 @@ const WorkOrderTracker = () => {
           </div>
         </div>
       ))}
-      <button className="btn btn-primary mb-5" onClick={handleAddCase}>
+      <button className="btn custom-btn-blue mb-5" onClick={handleAddCase}>
         Add Case
       </button>
       <div className="mb-3">
         <div>
           <button
-            className="btn btn-outline-success mb-3"
+            className="btn custom-btn-blue mb-3"
             onClick={handleExportData}
           >
             Export Data
