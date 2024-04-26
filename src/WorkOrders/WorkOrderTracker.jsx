@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Offcanvas, Button, Table, Collapse } from "react-bootstrap";
 import "./WorkOrderTracker.css";
+import ArchivedCasesOffCanvas from "./ArchivedCasesOffCanvas";
 
 const WorkOrderTracker = () => {
   const [cases, setCases] = useState(() => {
@@ -14,6 +15,7 @@ const WorkOrderTracker = () => {
   const [showNoteInput, setShowNoteInput] = useState(null); // State to track if note input is open
   const [currentNote, setCurrentNote] = useState(""); // State to track current note being entered
   const [openCases, setOpenCases] = useState([]);
+  const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
 
   // Define stages and their order
   const stages = [
@@ -193,6 +195,7 @@ const WorkOrderTracker = () => {
       notes: [], // Add a 'notes' array
       timestamp: getCurrentTimestamp(),
       history: [`Email Received (${timestamp})`], // Record initial status in history
+      status: "Active",
     };
     setCases([...cases, newCase]);
     setNextCaseId(nextCaseId + 1);
@@ -224,7 +227,9 @@ const WorkOrderTracker = () => {
   };
 
   const handleCloseCase = (caseId) => {
-    const newCases = cases.filter((item) => item.id !== caseId);
+    const newCases = cases.map((item) =>
+      item.id === caseId ? { ...item, status: "Archived" } : item,
+    );
     setCases(newCases);
   };
 
@@ -289,6 +294,23 @@ const WorkOrderTracker = () => {
     setCases(newCases);
   };
 
+  const handleReopenCase = (caseId) => {
+    const newCases = cases.map((caseItem) =>
+      caseItem.id === caseId ? { ...caseItem, status: "Active" } : caseItem,
+    );
+    setCases(newCases);
+  };
+
+  // Function to open the OffCanvas component
+  const handleOpenArchivedOffCanvas = () => {
+    setShowArchivedOffCanvas(true);
+  };
+
+  // Function to close the OffCanvas component
+  const handleCloseArchivedOffCanvas = () => {
+    setShowArchivedOffCanvas(false);
+  };
+
   // Function to export cases data to a JSON file
   const handleExportData = () => {
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
@@ -303,207 +325,227 @@ const WorkOrderTracker = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Function to handle file import
   const handleImportData = (event) => {
     const file = event.target.files[0];
     const reader = new FileReader();
     reader.onload = (e) => {
-      const importedCases = JSON.parse(e.target.result);
-      setCases(importedCases);
-      localStorage.setItem("cases", JSON.stringify(importedCases));
+      try {
+        const importedCases = JSON.parse(e.target.result);
+        console.log("Imported Cases:", importedCases);
+        setCases(importedCases);
+        localStorage.setItem("cases", JSON.stringify(importedCases));
+      } catch (error) {
+        console.error("Error importing data:", error);
+      }
     };
     reader.readAsText(file);
   };
-
   return (
     <div className="container mt-4">
       <h2 className="text-center">Work Order Tracker</h2>
-      {cases.map((item) => (
-        <div key={item.id} className="mb-4">
-          <div
-            className="case-header"
-            onClick={() => toggleCase(item.id)}
-            style={{
-              border: "1px solid #005e7d",
-              borderRadius: "10px",
-              padding: "5px",
-              cursor: "pointer",
-            }}
-          >
-            <h4>
-              {editingCaseId === item.id ? (
-                <React.Fragment>
-                  <input
-                    type="text"
-                    className="form-control mb-2"
-                    placeholder="Enter case name"
-                    value={item.name}
-                    onChange={(event) =>
-                      handleCaseNameChange(item.id, event.target.value)
-                    }
-                  />
-                  <button
-                    className="btn btn-success"
-                    type="button"
-                    onClick={() => handleSaveCaseName(item.id)}
-                  >
-                    Save
-                  </button>
-                </React.Fragment>
-              ) : (
-                <React.Fragment>
-                  {item.name ? `Case: ${item.name}` : `Case # ${item.id}`}
-                  <button
-                    className="btn btn-outline-secondary btn-sm ms-2"
-                    type="button"
-                    onClick={() => handleEditCaseName(item.id)}
-                  >
-                    Edit
-                  </button>
-                </React.Fragment>
-              )}
-            </h4>
-          </div>
-
-          <Collapse in={openCases.includes(item.id)}>
-            <div>
-              <p>
-                Case Stage: {item.stage} ({item.timestamp})
-                <button
-                  className="btn btn-link btn-sm"
-                  onClick={() => handleShowHistory(item.id)}
-                >
-                  History
-                </button>
-              </p>
-              <div>
-                <button
-                  className="btn custom-btn-green btn-sm me-2 mb-2"
-                  onClick={() => handleCaseStageChange(item.id, "previous")}
-                  disabled={item.stage === stages[0]}
-                >
-                  Previous Stage
-                </button>
-                <button
-                  className="btn custom-btn-green btn-sm mb-2"
-                  onClick={() => handleCaseStageChange(item.id, "next")}
-                  disabled={item.stage === stages[stages.length - 1]}
-                >
-                  Next Stage
-                </button>
-              </div>
-              {item.addresses.map((address, index) => (
-                <div key={`${item.id}-${index}`} className="input-group mb-3">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter street address"
-                    value={address.address}
-                    onChange={(event) =>
-                      handleAddressChange(item.id, index, event)
-                    }
-                  />
-                  <select
-                    className="form-select"
-                    value={address.stage}
-                    onChange={(event) =>
-                      handleAddressStageChange(item.id, index, event)
-                    }
-                  >
-                    {stages.map((stage) => (
-                      <option key={stage} value={stage}>
-                        {stage}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter Case ID"
-                    value={address.caseId}
-                    onChange={(event) =>
-                      handleCaseIdChange(item.id, index, event)
-                    } // Add handleCaseIdChange function
-                  />
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      handleCopyCustomerContact(address.address, address.caseId)
-                    }
-                  >
-                    Copy Customer Contact
-                  </Button>
-                  <button
-                    className="btn btn-outline-danger"
-                    type="button"
-                    onClick={() => handleRemoveAddress(item.id, index)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-
-              <button
-                className="btn btn-outline-secondary"
-                type="button"
-                onClick={() => handleAddAddress(item.id)}
-              >
-                Add Address
-              </button>
-              <button
-                className="btn btn-danger btn-sm ms-2"
-                onClick={() => handleCloseCase(item.id)}
-              >
-                Close Case
-              </button>
-              <button
-                className="btn custom-btn-blue btn-sm ms-2"
-                onClick={() => handleCopyAddresses(item.id)}
-              >
-                Copy Addresses/Cases
-              </button>
-              <button
-                className="btn custom-btn-blue btn-sm ms-2"
-                onClick={() => handleToggleNoteInput(item.id)}
-              >
-                {showNoteInput === item.id ? "Cancel" : "Add Note"}
-              </button>
-              {showNoteInput === item.id && (
-                <div className="input-group mt-2">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter note"
-                    value={currentNote}
-                    onChange={handleNoteChange}
-                  />
-                  <button
-                    className="btn btn-success"
-                    onClick={() => handleAddNote(item.id)}
-                  >
-                    Save
-                  </button>
-                </div>
-              )}
-              {/* Display notes for the case */}
-              <div className="mt-2">
-                {item.notes.map((note, index) => (
-                  <div key={index} className="d-flex align-items-center mb-2">
-                    <div>{note}</div>
+      {cases
+        .filter((item) => item.status === "Active") // Filter out archived cases
+        .map((item) => (
+          <div key={item.id} className="mb-4">
+            <div
+              className="case-header"
+              onClick={() => toggleCase(item.id)}
+              style={{
+                border: "1px solid #005e7d",
+                borderRadius: "10px",
+                padding: "5px",
+                cursor: "pointer",
+              }}
+            >
+              <h4>
+                {editingCaseId === item.id ? (
+                  <React.Fragment>
+                    <input
+                      type="text"
+                      className="form-control mb-2"
+                      placeholder="Enter case name"
+                      value={item.name}
+                      onChange={(event) =>
+                        handleCaseNameChange(item.id, event.target.value)
+                      }
+                    />
                     <button
-                      className="btn btn-sm btn-close ms-2"
-                      onClick={() => handleRemoveNote(item.id, index)}
-                    ></button>
+                      className="btn btn-success"
+                      type="button"
+                      onClick={() => handleSaveCaseName(item.id)}
+                    >
+                      Save
+                    </button>
+                  </React.Fragment>
+                ) : (
+                  <React.Fragment>
+                    {item.name ? `Case: ${item.name}` : `Case # ${item.id}`}
+                    <button
+                      className="btn btn-outline-secondary btn-sm ms-2"
+                      type="button"
+                      onClick={() => handleEditCaseName(item.id)}
+                    >
+                      Edit
+                    </button>
+                  </React.Fragment>
+                )}
+              </h4>
+            </div>
+
+            <Collapse in={openCases.includes(item.id)}>
+              <div>
+                <p>
+                  Case Stage: {item.stage} ({item.timestamp})
+                  <button
+                    className="btn btn-link btn-sm"
+                    onClick={() => handleShowHistory(item.id)}
+                  >
+                    History
+                  </button>
+                </p>
+                <div>
+                  <button
+                    className="btn custom-btn-green btn-sm me-2 mb-2"
+                    onClick={() => handleCaseStageChange(item.id, "previous")}
+                    disabled={item.stage === stages[0]}
+                  >
+                    Previous Stage
+                  </button>
+                  <button
+                    className="btn custom-btn-green btn-sm mb-2"
+                    onClick={() => handleCaseStageChange(item.id, "next")}
+                    disabled={item.stage === stages[stages.length - 1]}
+                  >
+                    Next Stage
+                  </button>
+                </div>
+                {item.addresses.map((address, index) => (
+                  <div key={`${item.id}-${index}`} className="input-group mb-3">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter street address"
+                      value={address.address}
+                      onChange={(event) =>
+                        handleAddressChange(item.id, index, event)
+                      }
+                    />
+                    <select
+                      className="form-select"
+                      value={address.stage}
+                      onChange={(event) =>
+                        handleAddressStageChange(item.id, index, event)
+                      }
+                    >
+                      {stages.map((stage) => (
+                        <option key={stage} value={stage}>
+                          {stage}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter Case ID"
+                      value={address.caseId}
+                      onChange={(event) =>
+                        handleCaseIdChange(item.id, index, event)
+                      } // Add handleCaseIdChange function
+                    />
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        handleCopyCustomerContact(
+                          address.address,
+                          address.caseId,
+                        )
+                      }
+                    >
+                      Copy Customer Contact
+                    </Button>
+                    <button
+                      className="btn btn-outline-danger"
+                      type="button"
+                      onClick={() => handleRemoveAddress(item.id, index)}
+                    >
+                      Remove
+                    </button>
                   </div>
                 ))}
+
+                <button
+                  className="btn btn-outline-secondary"
+                  type="button"
+                  onClick={() => handleAddAddress(item.id)}
+                >
+                  Add Address
+                </button>
+                <button
+                  className="btn btn-danger btn-sm ms-2"
+                  onClick={() => handleCloseCase(item.id)}
+                >
+                  Close Case
+                </button>
+                <button
+                  className="btn custom-btn-blue btn-sm ms-2"
+                  onClick={() => handleCopyAddresses(item.id)}
+                >
+                  Copy Addresses/Cases
+                </button>
+                <button
+                  className="btn custom-btn-blue btn-sm ms-2"
+                  onClick={() => handleToggleNoteInput(item.id)}
+                >
+                  {showNoteInput === item.id ? "Cancel" : "Add Note"}
+                </button>
+                {showNoteInput === item.id && (
+                  <div className="input-group mt-2">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter note"
+                      value={currentNote}
+                      onChange={handleNoteChange}
+                    />
+                    <button
+                      className="btn btn-success"
+                      onClick={() => handleAddNote(item.id)}
+                    >
+                      Save
+                    </button>
+                  </div>
+                )}
+                {/* Display notes for the case */}
+                <div className="mt-2">
+                  {item.notes.map((note, index) => (
+                    <div key={index} className="d-flex align-items-center mb-2">
+                      <div>{note}</div>
+                      <button
+                        className="btn btn-sm btn-close ms-2"
+                        onClick={() => handleRemoveNote(item.id, index)}
+                      ></button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </Collapse>
-        </div>
-      ))}
+            </Collapse>
+          </div>
+        ))}
       <button className="btn custom-btn-blue mb-5" onClick={handleAddCase}>
         Add Case
       </button>
+      <button
+        className="btn custom-btn-blue mx-2 mb-5"
+        onClick={handleOpenArchivedOffCanvas}
+      >
+        Open Archived Cases
+      </button>
+      <ArchivedCasesOffCanvas
+        cases={cases}
+        handleReopenCase={handleReopenCase}
+        show={showArchivedOffCanvas}
+        handleClose={handleCloseArchivedOffCanvas}
+      />
       <div className="mb-3">
         <div>
           <button
@@ -574,6 +616,7 @@ const WorkOrderTracker = () => {
           )}
         </Offcanvas.Body>
       </Offcanvas>
+      
     </div>
   );
 };

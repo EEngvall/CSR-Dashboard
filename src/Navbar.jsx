@@ -38,6 +38,11 @@ const Navbar = () => {
               </Link>
             </li>
             <li className="nav-item">
+              <Link className="nav-link custom-nav-blue" to="/returnsTracker">
+                Return Call List
+              </Link>
+            </li>
+            <li className="nav-item">
               <Link className="nav-link custom-nav-blue" to="/tasks">
                 Tasks
               </Link>
