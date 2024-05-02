@@ -88,8 +88,8 @@ function AccountCount({ accounts, csrs }) {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="complete" fill="#8884d8" barSize={20} />
-          <Bar dataKey="incomplete" fill="#82ca9d" barSize={20} />
+          <Bar dataKey="complete" fill="#acd038" barSize={20} />
+          <Bar dataKey="incomplete" fill="#FF2D00" barSize={20} />
         </BarChart>
       </div>
     </div>

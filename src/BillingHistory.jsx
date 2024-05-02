@@ -160,7 +160,7 @@ const BillingHistory = () => {
 
   return (
     <div className="container">
-      <h1>Billing History</h1>
+      <h1>Billing History Visualizer</h1>
       <div className="row">
         <div className="col">
           <input
@@ -181,7 +181,10 @@ const BillingHistory = () => {
               onChange={(e) => setRowsToOmit(parseInt(e.target.value, 10))}
             />
           </div>
-          <button className="btn custom-btn-blue mx-2 my-2" onClick={processFile}>
+          <button
+            className="btn custom-btn-blue mx-2 my-2"
+            onClick={processFile}
+          >
             Process File
           </button>
 
