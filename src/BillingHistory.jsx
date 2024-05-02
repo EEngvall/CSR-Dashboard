@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Papa from "papaparse";
 import MonthlyAverageChart from "./MonthlyAverageChart";
+import "./CustomColors.css";
 
 const BillingHistory = () => {
   const [overallAverage, setOverallAverage] = useState(0);
@@ -121,7 +122,6 @@ const BillingHistory = () => {
       });
     });
 
-
     setOverallAverage(calculateOverallAverage(monthlyAverages));
     setMonthlyAverages(monthlyAverages);
     setMonthlyAveragesByYear(monthlyAveragesByYear);
@@ -181,7 +181,7 @@ const BillingHistory = () => {
               onChange={(e) => setRowsToOmit(parseInt(e.target.value, 10))}
             />
           </div>
-          <button className="btn btn-primary mx-2 my-2" onClick={processFile}>
+          <button className="btn custom-btn-blue mx-2 my-2" onClick={processFile}>
             Process File
           </button>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Papa from "papaparse";
+import "./CustomColors.css";
 
 function FileUpload() {
   const [file, setFile] = useState();
@@ -160,6 +161,35 @@ function FileUpload() {
     });
   };
 
+  const transferAccountNumbers = () => {
+    const trackedAccounts = [];
+    Object.keys(checkedRows).forEach((key) => {
+      if (checkedRows[key]) {
+        const rowData = processedData.find((row) => row.key === key);
+        if (rowData) {
+          // Create object following the structure of the handleSubmit function
+          const newAccount = {
+            accountNumber: rowData.accountNumber,
+            status: "Incomplete",
+            csr: "",
+            createdAt: new Date().toLocaleString(),
+            completedAt: "Incomplete",
+          };
+          trackedAccounts.push(newAccount);
+        }
+      }
+    });
+
+    // Get existing accounts from local storage or initialize as empty array
+    const existingAccounts = JSON.parse(localStorage.getItem("accounts")) || [];
+
+    // Concatenate existing accounts with newly tracked accounts and store in local storage
+    localStorage.setItem(
+      "accounts",
+      JSON.stringify([...existingAccounts, ...trackedAccounts]),
+    );
+  };
+
   return (
     <div className="container">
       <div className="my-5">
@@ -169,8 +199,15 @@ function FileUpload() {
           className="form-control mb-3"
           id="fileInput"
         />
-        <button className="btn btn-primary" onClick={handleFileUpload}>
+        <button className="btn custom-btn-blue" onClick={handleFileUpload}>
           Upload
+        </button>
+        {/* Button to process checked rows */}
+        <button
+          className="btn custom-btn-blue mx-2"
+          onClick={transferAccountNumbers}
+        >
+          Transfer to Call List
         </button>
       </div>
       <div className="form-check">
@@ -247,7 +284,7 @@ function FileUpload() {
           </table>
         )}
       </div>
-      <button className="mt-3 btn btn-primary" onClick={copyAccountNumbers}>
+      <button className="mt-3 btn custom-btn-blue" onClick={copyAccountNumbers}>
         Copy Account Numbers
       </button>
     </div>
