@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useAccounts } from "../hooks/useAccounts"; // Adjust the path as necessary
+import useAccounts from "../hooks/useAccounts"; // Adjust the path as necessary
 import Papa from "papaparse";
 import "../CustomColors.css";
 
