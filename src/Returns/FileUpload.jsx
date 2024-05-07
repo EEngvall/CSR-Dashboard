@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Papa from "papaparse";
-import "./CustomColors.css";
+import "../CustomColors.css";
 
 function FileUpload() {
   const [file, setFile] = useState();

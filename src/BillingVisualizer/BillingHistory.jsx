@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Papa from "papaparse";
 import MonthlyAverageChart from "./MonthlyAverageChart";
-import "./CustomColors.css";
+import "../CustomColors.css";
 
 const BillingHistory = () => {
   const [overallAverage, setOverallAverage] = useState(0);
