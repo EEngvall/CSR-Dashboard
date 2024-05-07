@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useAccounts } from "../hooks/useAccounts"; // Adjust the path as necessary
 import Papa from "papaparse";
 import "../CustomColors.css";
 
@@ -152,42 +153,36 @@ function FileUpload() {
 
   const handleCheckboxChange = (key) => {
     setCheckedRows((prevState) => {
-      const updatedState = {
-        ...prevState,
-        [key]: !prevState[key], // Toggle checked status
-      };
-      // console.log("Updated checkedRows:", updatedState); // Log updated state
-      return updatedState;
+      const newState = { ...prevState, [key]: !prevState[key] };
+      console.log(`Checkbox state for ${key}:`, newState[key]);
+      return newState;
     });
   };
 
   const transferAccountNumbers = () => {
-    const trackedAccounts = [];
-    Object.keys(checkedRows).forEach((key) => {
-      if (checkedRows[key]) {
-        const rowData = processedData.find((row) => row.key === key);
-        if (rowData) {
-          // Create object following the structure of the handleSubmit function
-          const newAccount = {
-            accountNumber: rowData.accountNumber,
-            status: "Incomplete",
-            csr: "",
-            createdAt: new Date().toLocaleString(),
-            completedAt: "Incomplete",
-          };
-          trackedAccounts.push(newAccount);
-        }
+    const { addAccount } = useAccounts(); // Destructure the addAccount function from the hook
+    const remainingAccounts = [];
+
+    processedData.forEach((row) => {
+      if (checkedRows[row.key]) {
+        // Create object for the account to be transferred
+        const newAccount = {
+          accountNumber: row.accountNumber,
+          status: "Incomplete",
+          csr: "",
+          createdAt: new Date().toLocaleString(),
+          completedAt: "Incomplete",
+        };
+        addAccount(newAccount); // Use the addAccount function from useAccounts hook
+      } else {
+        remainingAccounts.push(row); // Keep the account in display if not checked
       }
     });
 
-    // Get existing accounts from local storage or initialize as empty array
-    const existingAccounts = JSON.parse(localStorage.getItem("accounts")) || [];
-
-    // Concatenate existing accounts with newly tracked accounts and store in local storage
-    localStorage.setItem(
-      "accounts",
-      JSON.stringify([...existingAccounts, ...trackedAccounts]),
-    );
+    // Update the processed data to only show remaining accounts
+    setProcessedData(remainingAccounts);
+    // Reset checked rows since they are now transferred or no longer displayed
+    setCheckedRows({});
   };
 
   return (
@@ -265,8 +260,7 @@ function FileUpload() {
                     <input
                       className="form-check-input"
                       type="checkbox"
-                      value=""
-                      id={`flexCheckDefault${index}`}
+                      checked={!!checkedRows[row.key]} // Ensure conversion to boolean
                       onChange={() => handleCheckboxChange(row.key)}
                     />
                   </td>

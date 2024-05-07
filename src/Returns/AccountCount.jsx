@@ -13,6 +13,9 @@ function AccountCount({ accounts, csrs }) {
   // Initialize objects to store the count for each CSR
   const completeAccountCount = {};
   const incompleteAccountCount = {};
+  let unassignedCompletedCount = 0; // Initialize count for completed unassigned accounts
+  let unassignedIncompleteCount = 0; // Initialize count for incomplete unassigned accounts
+
   let unassignedCount = 0; // Initialize count for unassigned accounts
 
   // Iterate through accounts and count how many are assigned to each CSR
@@ -26,8 +29,12 @@ function AccountCount({ accounts, csrs }) {
           (incompleteAccountCount[account.csr] || 0) + 1;
       }
     } else {
-      // Assuming 'unassigned' accounts are those without a CSR assigned
-      unassignedCount++;
+      // Increment the appropriate counter based on the account status
+      if (account.status === "Completed") {
+        unassignedCompletedCount++;
+      } else {
+        unassignedIncompleteCount++;
+      }
     }
   });
 
@@ -41,8 +48,8 @@ function AccountCount({ accounts, csrs }) {
   // Include unassigned accounts in the data array
   data.push({
     name: "Unassigned",
-    complete: 0,
-    incomplete: unassignedCount,
+    complete: unassignedCompletedCount,
+    incomplete: unassignedIncompleteCount,
   });
 
   return (
