@@ -17,20 +17,17 @@ function AccountCount({ accounts, csrs }) {
 
   // Iterate through accounts and count how many are assigned to each CSR
   accounts.forEach((account) => {
-    if (account.status === "Completed") {
-      if (!completeAccountCount[account.csr]) {
-        completeAccountCount[account.csr] = 1;
+    if (account.csr) {
+      if (account.status === "Completed") {
+        completeAccountCount[account.csr] =
+          (completeAccountCount[account.csr] || 0) + 1;
       } else {
-        completeAccountCount[account.csr]++;
-      }
-    } else if (account.status === "Incomplete") {
-      if (!incompleteAccountCount[account.csr]) {
-        incompleteAccountCount[account.csr] = 1;
-      } else {
-        incompleteAccountCount[account.csr]++;
+        incompleteAccountCount[account.csr] =
+          (incompleteAccountCount[account.csr] || 0) + 1;
       }
     } else {
-      unassignedCount++; // Increment count for unassigned accounts
+      // Assuming 'unassigned' accounts are those without a CSR assigned
+      unassignedCount++;
     }
   });
 
@@ -50,7 +47,6 @@ function AccountCount({ accounts, csrs }) {
 
   return (
     <div className="mt-5" style={{ display: "flex" }}>
-      {/* Table */}
       <div className="me-5" style={{ flex: 1 }}>
         <table className="table">
           <thead>
@@ -61,7 +57,6 @@ function AccountCount({ accounts, csrs }) {
             </tr>
           </thead>
           <tbody>
-            {/* Display the count for each CSR in table rows */}
             {csrs.map((csr) => (
               <tr key={csr}>
                 <td>{csr}</td>
@@ -69,18 +64,16 @@ function AccountCount({ accounts, csrs }) {
                 <td>{incompleteAccountCount[csr] || 0}</td>
               </tr>
             ))}
-            {/* Display a separate row for unassigned accounts */}
+
             <tr>
               <td>Unassigned</td>
-              <td>0</td> {/* Complete count for unassigned is always 0 */}
+              <td>0</td>
               <td>{unassignedCount}</td>{" "}
-              {/* Display the count for unassigned accounts */}
             </tr>
           </tbody>
         </table>
       </div>
 
-      {/* Recharts graph */}
       <div style={{ flex: 1 }}>
         <BarChart width={600} height={300} data={data}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -88,8 +81,8 @@ function AccountCount({ accounts, csrs }) {
           <YAxis />
           <Tooltip />
           <Legend />
-          <Bar dataKey="complete" fill="#acd038" barSize={20} />
-          <Bar dataKey="incomplete" fill="#FF2D00" barSize={20} />
+          <Bar dataKey="complete" fill="#005e7d" barSize={20} />
+          <Bar dataKey="incomplete" fill="#acd038" barSize={20} />
         </BarChart>
       </div>
     </div>

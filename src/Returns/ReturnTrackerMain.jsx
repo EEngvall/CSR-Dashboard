@@ -1,46 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import useAccounts from "../hooks/useAccounts";
 import AccountTable from "./AccountTable";
 import "./AccountTable.css";
 
 function ReturnTrackerMain() {
   const [accountNumber, setAccountNumber] = useState("");
-  const [accounts, setAccounts] = useState(() => {
-    const storedAccounts = JSON.parse(localStorage.getItem("accounts"));
-    return storedAccounts ? storedAccounts : [];
-  });
+  const { accounts, addAccount, updateAccountStatus } = useAccounts();
 
   const handleAccountNumberChange = (e) => {
     setAccountNumber(e.target.value);
   };
 
   const handleCompletionCheckBoxChange = (index, e) => {
-    const newAccounts = [...accounts];
-    newAccounts[index].status = e.target.checked ? "Completed" : "Incomplete";
-    newAccounts[index].completedAt = e.target.checked
+    const status = e.target.checked ? "Completed" : "Incomplete";
+    const completedAt = e.target.checked
       ? new Date().toLocaleString()
       : "Incomplete";
-    setAccounts(newAccounts);
+    updateAccountStatus(index, status, completedAt);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (accountNumber.trim() !== "") {
-      // Add the account to the list
       const newAccount = {
-        accountNumber: accountNumber,
-        status: "Incomplete", // You can set the initial status here
-        csr: "", // Initial CSR can be empty
+        accountNumber,
+        status: "Incomplete",
+        csr: "",
         createdAt: new Date().toLocaleString(),
         completedAt: "Incomplete",
       };
-      setAccounts([...accounts, newAccount]);
-      // Clear the input field after submission
+      addAccount(newAccount);
       setAccountNumber("");
+      console.log("Account added successfully!");
     }
   };
-  useEffect(() => {
-    localStorage.setItem("accounts", JSON.stringify(accounts));
-  }, [accounts]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -76,18 +69,18 @@ function ReturnTrackerMain() {
           Add Account
         </button>
       </form>
-
       <AccountTable
+        key={accounts.length}
         accounts={accounts}
-        setAccounts={setAccounts}
+        setAccounts={() => {}}
         handleCompletionCheckBoxChange={handleCompletionCheckBoxChange}
       />
-      <div class="my-3 col-md-3">
-        <label for="formFileSm" class="form-label">
+      <div className="my-3 col-md-3">
+        <label htmlFor="formFileSm" className="form-label">
           Import JSON Backup
         </label>
         <input
-          class="form-control form-control-sm"
+          className="form-control form-control-sm"
           id="formFileSm"
           type="file"
           accept=".json"

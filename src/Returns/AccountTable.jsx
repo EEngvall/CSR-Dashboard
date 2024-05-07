@@ -1,47 +1,38 @@
 import React, { useState, useEffect } from "react";
 import "./AccountTable.css";
 import AccountCount from "./AccountCount";
+import useAccounts from "../hooks/useAccounts";
+import useCsrs from "../hooks/useCsrs";
 
-function AccountTable({
-  accounts,
-  setAccounts,
-  handleCompletionCheckBoxChange,
-}) {
+function AccountTable() {
+  const { accounts, updateAccountCSR, updateAccountStatus, removeAccount } =
+    useAccounts();
+  const { csrs, addCsr, removeCsr } = useCsrs();
   const [newCsr, setNewCsr] = useState("");
-  const [csrs, setCsrs] = useState(() => {
-    const storedCsrs = JSON.parse(localStorage.getItem("csrs"));
-    return storedCsrs ? storedCsrs : [];
-  });
 
-  useEffect(() => {
-    localStorage.setItem("csrs", JSON.stringify(csrs));
-  }, [csrs]);
-
-  const handleCSRChange = (index, e) => {
-    const newAccounts = [...accounts];
-    newAccounts[index].csr = e.target.value;
-    setAccounts(newAccounts);
-  };
-
-  const handleNewCSRChange = (e) => {
-    setNewCsr(e.target.value);
-  };
-
+  const handleNewCSRChange = (e) => setNewCsr(e.target.value);
   const handleAddCSR = () => {
     if (newCsr.trim() !== "") {
-      setCsrs([...csrs, newCsr]);
+      addCsr(newCsr);
       setNewCsr(""); // Clear the input field
     }
   };
 
-  const handleRemoveCSR = (csrToRemove) => {
-    setCsrs(csrs.filter((csr) => csr !== csrToRemove));
+  // Inside AccountTable component
+  const handleCSRChange = (index, e) => {
+    updateAccountCSR(index, e.target.value);
+  };
+
+  const handleCompletionCheckBoxChange = (index, e) => {
+    const status = e.target.checked ? "Completed" : "Incomplete";
+    const completedAt = e.target.checked
+      ? new Date().toLocaleString()
+      : "Incomplete";
+    updateAccountStatus(index, status, completedAt);
   };
 
   const handleDeleteAccount = (index) => {
-    const updatedAccounts = [...accounts];
-    updatedAccounts.splice(index, 1);
-    setAccounts(updatedAccounts);
+    removeAccount(index);
   };
 
   const handleExportAccounts = () => {
@@ -49,17 +40,11 @@ function AccountTable({
     const jsonBlob = new Blob([JSON.stringify(accounts)], {
       type: "application/json",
     });
-
-    // Create a link element to trigger the download
     const link = document.createElement("a");
     link.href = URL.createObjectURL(jsonBlob);
     link.download = "Returns_Call_List.json";
     document.body.appendChild(link);
-
-    // Trigger the download
     link.click();
-
-    // Clean up
     document.body.removeChild(link);
   };
 
@@ -96,7 +81,7 @@ function AccountTable({
                 <td>
                   <select
                     className="form-select"
-                    value={account.csr}
+                    value={account.csr} // Ensuring undefined values don't cause issues
                     onChange={(e) => handleCSRChange(index, e)}
                   >
                     <option value="">Select CSR</option>
@@ -108,8 +93,6 @@ function AccountTable({
                   </select>
                 </td>
                 <td>
-                  {" "}
-                  {/* Added new column for delete button */}
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={() => handleDeleteAccount(index)}
@@ -129,7 +112,7 @@ function AccountTable({
         </div>
         <div>
           <button
-            class="btn custom-btn-blue my-2"
+            className="btn custom-btn-blue my-2"
             type="button"
             data-bs-toggle="offcanvas"
             data-bs-target="#CSR-offcanvas"
@@ -139,24 +122,24 @@ function AccountTable({
           </button>
 
           <div
-            class="offcanvas offcanvas-start"
+            className="offcanvas offcanvas-start"
             data-bs-scroll="true"
-            tabindex="-1"
+            tabIndex="-1"
             id="CSR-offcanvas"
             aria-labelledby="offcanvasCSR"
           >
-            <div class="offcanvas-header">
-              <h5 class="offcanvas-title" id="offcanvasCSR">
+            <div className="offcanvas-header">
+              <h5 className="offcanvas-title" id="offcanvasCSR">
                 Edit CSRs
               </h5>
               <button
                 type="button"
-                class="btn-close"
+                className="btn-close"
                 data-bs-dismiss="offcanvas"
                 aria-label="Close"
               ></button>
             </div>
-            <div class="offcanvas-body">
+            <div className="offcanvas-body">
               <input
                 type="text"
                 className="form-control"
@@ -184,7 +167,7 @@ function AccountTable({
                       <td>
                         <button
                           className="btn btn-danger btn-sm"
-                          onClick={() => handleRemoveCSR(csr)}
+                          onClick={() => removeCsr(csr)}
                         >
                           Remove
                         </button>
