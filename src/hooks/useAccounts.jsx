@@ -35,6 +35,12 @@ const useAccounts = (initialValue = []) => {
     setAccounts(newAccounts);
   };
 
+  const addMultipleAccounts = async (newAccounts) => {
+    const updatedAccounts = [...accounts, ...newAccounts];
+    await saveAccounts(updatedAccounts);
+    setAccounts(updatedAccounts);
+  };
+
   const updateAccountStatus = async (index, status, completedAt) => {
     const newAccounts = [...accounts];
     newAccounts[index].status = status;
@@ -66,6 +72,7 @@ const useAccounts = (initialValue = []) => {
     updateAccountStatus,
     removeAccount,
     updateAccountCSR,
+    addMultipleAccounts,
   };
 };
 

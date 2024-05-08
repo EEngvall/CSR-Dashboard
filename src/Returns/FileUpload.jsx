@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import useAccounts from "../hooks/useAccounts"; // Adjust the path as necessary
+import useAccounts from "../hooks/useAccounts";
 import Papa from "papaparse";
 import "../CustomColors.css";
 
@@ -9,6 +9,7 @@ function FileUpload() {
   const [processedData, setProcessedData] = useState([]);
   const [source, setSource] = useState("PaymentUS");
   const [checkedRows, setCheckedRows] = useState({});
+  const { addMultipleAccounts } = useAccounts(); // Destructure the addAccount function from the hook
 
   const onOptionChange = (e) => {
     setSource(e.target.value);
@@ -159,28 +160,31 @@ function FileUpload() {
     });
   };
 
-  const transferAccountNumbers = () => {
-    const { addAccount } = useAccounts(); // Destructure the addAccount function from the hook
+  const transferAccountNumbers = async () => {
     const remainingAccounts = [];
+    const newAccounts = [];
 
+    // Collect all the checked accounts into the `newAccounts` array
     processedData.forEach((row) => {
       if (checkedRows[row.key]) {
-        // Create object for the account to be transferred
-        const newAccount = {
+        newAccounts.push({
           accountNumber: row.accountNumber,
           status: "Incomplete",
           csr: "",
           createdAt: new Date().toLocaleString(),
           completedAt: "Incomplete",
-        };
-        addAccount(newAccount); // Use the addAccount function from useAccounts hook
+        });
       } else {
         remainingAccounts.push(row); // Keep the account in display if not checked
       }
     });
 
+    // Use the new `addMultipleAccounts` function
+    await addMultipleAccounts(newAccounts);
+
     // Update the processed data to only show remaining accounts
     setProcessedData(remainingAccounts);
+
     // Reset checked rows since they are now transferred or no longer displayed
     setCheckedRows({});
   };
@@ -197,7 +201,6 @@ function FileUpload() {
         <button className="btn custom-btn-blue" onClick={handleFileUpload}>
           Upload
         </button>
-        {/* Button to process checked rows */}
         <button
           className="btn custom-btn-blue mx-2"
           onClick={transferAccountNumbers}
