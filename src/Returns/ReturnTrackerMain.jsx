@@ -22,14 +22,7 @@ function ReturnTrackerMain() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (accountNumber.trim() !== "") {
-      const newAccount = {
-        accountNumber,
-        status: "Incomplete",
-        csr: "",
-        createdAt: new Date().toLocaleString(),
-        completedAt: "Incomplete",
-      };
-      addAccount(newAccount);
+      addAccount(accountNumber);
       setAccountNumber("");
       console.log("Account added successfully!");
     }
@@ -80,7 +73,7 @@ function ReturnTrackerMain() {
           Import JSON Backup
         </label>
         <input
-          className="form-control form-control-sm"
+          className="form-control form-control-sm mb-5"
           id="formFileSm"
           type="file"
           accept=".json"
