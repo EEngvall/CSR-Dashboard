@@ -7,7 +7,7 @@ const useAccounts = (initialValue = []) => {
     return storedAccounts || initialValue;
   });
 
-  // Asynchronously fetch accounts from localStorage
+
   const fetchAccounts = async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -17,7 +17,6 @@ const useAccounts = (initialValue = []) => {
     });
   };
 
-  // Asynchronously save accounts to localStorage
   const saveAccounts = async (newAccounts) => {
     return new Promise((resolve, reject) => {
       try {
@@ -80,9 +79,22 @@ const useAccounts = (initialValue = []) => {
     }
   };
 
-  const updateAccountStatus = async (index, status, completedAt) => {
+  const updateAccountStatus = async (accountKey, status, completedAt) => {
+    const accountIndex = accounts.findIndex(
+      (account) => account.key === accountKey,
+    );
+    if (accountIndex === -1) {
+      console.error("Account not found");
+      return; 
+    }
+
     const newAccounts = [...accounts];
-    newAccounts[index] = { ...newAccounts[index], status, completedAt };
+    newAccounts[accountIndex] = {
+      ...newAccounts[accountIndex],
+      status,
+      completedAt,
+    };
+
     await saveAccounts(newAccounts);
     setAccounts(newAccounts);
   };

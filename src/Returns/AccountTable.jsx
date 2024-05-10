@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import "./AccountTable.css";
 import AccountCount from "./AccountCount";
 import useAccounts from "../hooks/useAccounts";
@@ -16,6 +16,10 @@ function AccountTable() {
   const { csrs, addCsr, removeCsr } = useCsrs();
   const [newCsr, setNewCsr] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "none",
+  });
 
   const handleNewCSRChange = (e) => setNewCsr(e.target.value);
   const handleAddCSR = () => {
@@ -29,12 +33,12 @@ function AccountTable() {
     updateAccountCSR(accountKey, e.target.value);
   };
 
-  const handleCompletionCheckBoxChange = (index, e) => {
+  const handleCompletionCheckBoxChange = (accountKey, e) => {
     const status = e.target.checked ? "Completed" : "Incomplete";
     const completedAt = e.target.checked
       ? new Date().toLocaleString()
       : "Incomplete";
-    updateAccountStatus(index, status, completedAt);
+    updateAccountStatus(accountKey, status, completedAt);
   };
 
   const handleDeleteAccount = (accountKey) => {
@@ -70,6 +74,49 @@ function AccountTable() {
     (account) => account.archived === false,
   );
 
+  const requestSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedAccounts = useMemo(() => {
+    return [...filteredAccounts].sort((a, b) => {
+      const key = sortConfig.key;
+      if (key === "status") {
+        // Assuming 'status' is used for the Completed checkbox
+        // Sort boolean status values (assuming 'Completed' > 'Incomplete')
+        return sortConfig.direction === "ascending"
+          ? a.status === "Completed" && b.status !== "Completed"
+            ? -1
+            : a.status !== "Completed" && b.status === "Completed"
+              ? 1
+              : 0
+          : a.status !== "Completed" && b.status === "Completed"
+            ? -1
+            : a.status === "Completed" && b.status !== "Completed"
+              ? 1
+              : 0;
+      } else if (key === "csr") {
+        // Alphabetical sorting for CSR
+        return sortConfig.direction === "ascending"
+          ? a.csr.localeCompare(b.csr)
+          : b.csr.localeCompare(a.csr);
+      } else {
+        // Numeric or string comparison for other fields
+        if (a[key] < b[key]) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (a[key] > b[key]) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      }
+    });
+  }, [filteredAccounts, sortConfig]);
+
   return (
     <div>
       <div className="table-container">
@@ -77,14 +124,35 @@ function AccountTable() {
           <thead>
             <tr>
               <th>Complete</th>
-              <th>Account Number</th>
-              <th>Status</th>
-              <th>CSR</th>
+              <th onClick={() => requestSort("accountNumber")}>
+                Account Number{" "}
+                {sortConfig.key === "accountNumber"
+                  ? sortConfig.direction === "ascending"
+                    ? "🔼"
+                    : "🔽"
+                  : ""}
+              </th>
+              <th onClick={() => requestSort("status")}>
+                Status{" "}
+                {sortConfig.key === "status"
+                  ? sortConfig.direction === "ascending"
+                    ? "🔼"
+                    : "🔽"
+                  : ""}
+              </th>
+              <th onClick={() => requestSort("csr")}>
+                CSR{" "}
+                {sortConfig.key === "csr"
+                  ? sortConfig.direction === "ascending"
+                    ? "🔼"
+                    : "🔽"
+                  : ""}
+              </th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredAccounts.map((account, index) => (
+            {sortedAccounts.map((account) => (
               <tr
                 key={account.key}
                 className={
@@ -96,7 +164,9 @@ function AccountTable() {
                     className="form-check-input"
                     type="checkbox"
                     checked={account.status === "Completed"}
-                    onChange={(e) => handleCompletionCheckBoxChange(index, e)}
+                    onChange={(e) =>
+                      handleCompletionCheckBoxChange(account.key, e)
+                    }
                   />
                 </td>
                 <td>{account.accountNumber}</td>
