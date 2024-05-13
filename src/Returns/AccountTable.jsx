@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import "./AccountTable.css";
 import AccountCount from "./AccountCount";
+import ArchivedOffCanvasReturns from "./ArchivedOffCanvasReturns";
 import useAccounts from "../hooks/useAccounts";
 import useCsrs from "../hooks/useCsrs";
 
@@ -16,6 +17,7 @@ function AccountTable() {
   const { csrs, addCsr, removeCsr } = useCsrs();
   const [newCsr, setNewCsr] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
+  const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: "none",
@@ -117,6 +119,16 @@ function AccountTable() {
     });
   }, [filteredAccounts, sortConfig]);
 
+  // Function to open the OffCanvas component
+  const handleOpenArchivedOffCanvas = () => {
+    setShowArchivedOffCanvas(true);
+  };
+
+  // Function to close the OffCanvas component
+  const handleCloseArchivedOffCanvas = () => {
+    setShowArchivedOffCanvas(false);
+  };
+
   return (
     <div>
       <div className="table-container">
@@ -204,6 +216,18 @@ function AccountTable() {
           </tbody>
         </table>
       </div>
+      <button
+        className="btn custom-btn-blue mx-2 mb-5"
+        onClick={handleOpenArchivedOffCanvas}
+      >
+        Open Archived Cases
+      </button>
+      <ArchivedOffCanvasReturns
+        accounts={accounts}
+        updateArchivedStatus={handleArchiveAccount}
+        show={showArchivedOffCanvas}
+        handleClose={handleCloseArchivedOffCanvas}
+      />
 
       <div className="row">
         <div className="col-md-6">

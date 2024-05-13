@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { Offcanvas, Button } from "react-bootstrap";
 
 const ArchivedCasesOffCanvas = ({
