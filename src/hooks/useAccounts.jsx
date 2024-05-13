@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 const useAccounts = (initialValue = []) => {
   const [accounts, setAccounts] = useState(() => {
@@ -6,7 +7,7 @@ const useAccounts = (initialValue = []) => {
     return storedAccounts || initialValue;
   });
 
-  // Asynchronously fetch accounts from localStorage
+
   const fetchAccounts = async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -16,7 +17,6 @@ const useAccounts = (initialValue = []) => {
     });
   };
 
-  // Asynchronously save accounts to localStorage
   const saveAccounts = async (newAccounts) => {
     return new Promise((resolve, reject) => {
       try {
@@ -29,37 +29,90 @@ const useAccounts = (initialValue = []) => {
     });
   };
 
-  const addAccount = async (account) => {
-    const newAccounts = [...accounts, account];
+  const addAccount = async (accountNumber) => {
+    const updatedAccount = {
+      key: uuidv4(), // Generate UUID for the key
+      accountNumber: accountNumber,
+      archived: false, // Default archived status
+      status: "Incomplete",
+      csr: "",
+      createdAt: new Date().toLocaleString(),
+      completedAt: "Incomplete",
+    };
+    const newAccounts = [...accounts, updatedAccount];
     await saveAccounts(newAccounts);
     setAccounts(newAccounts);
   };
 
-  const addMultipleAccounts = async (newAccounts) => {
-    const updatedAccounts = [...accounts, ...newAccounts];
+  const addMultipleAccounts = async (newAccountNumbers) => {
+    const updatedAccounts = newAccountNumbers.map((accountNumber) => ({
+      key: uuidv4(),
+      accountNumber,
+      archived: false,
+      status: "Incomplete",
+      csr: "",
+      createdAt: new Date().toLocaleString(),
+      completedAt: "Incomplete",
+    }));
+
+    const newAccounts = [...accounts, ...updatedAccounts];
+    await saveAccounts(newAccounts);
+    setAccounts(newAccounts);
+  };
+
+  const updateArchivedStatus = async (accountKey) => {
+    const updatedAccounts = [...accounts]; // Create a copy of the accounts array
+
+    // Find the index of the account with the specified key
+    const index = updatedAccounts.findIndex(
+      (account) => account.key === accountKey,
+    );
+
+    if (index !== -1) {
+      updatedAccounts[index] = {
+        ...updatedAccounts[index],
+        archived: !updatedAccounts[index]?.archived ?? true,
+      };
+
+      await saveAccounts(updatedAccounts);
+      setAccounts(updatedAccounts);
+    }
+  };
+
+  const updateAccountStatus = async (accountKey, status, completedAt) => {
+    const accountIndex = accounts.findIndex(
+      (account) => account.key === accountKey,
+    );
+    if (accountIndex === -1) {
+      console.error("Account not found");
+      return; 
+    }
+
+    const newAccounts = [...accounts];
+    newAccounts[accountIndex] = {
+      ...newAccounts[accountIndex],
+      status,
+      completedAt,
+    };
+
+    await saveAccounts(newAccounts);
+    setAccounts(newAccounts);
+  };
+
+  const removeAccount = async (accountKey) => {
+    const newAccounts = accounts.filter(
+      (accounts) => accounts.key !== accountKey,
+    );
+    await saveAccounts(newAccounts);
+    setAccounts(newAccounts);
+  };
+
+  const updateAccountCSR = async (accountKey, newCsr) => {
+    const updatedAccounts = accounts.map((account) =>
+      account.key === accountKey ? { ...account, csr: newCsr } : account,
+    );
     await saveAccounts(updatedAccounts);
     setAccounts(updatedAccounts);
-  };
-
-  const updateAccountStatus = async (index, status, completedAt) => {
-    const newAccounts = [...accounts];
-    newAccounts[index].status = status;
-    newAccounts[index].completedAt = completedAt;
-    await saveAccounts(newAccounts);
-    setAccounts(newAccounts);
-  };
-
-  const removeAccount = async (index) => {
-    const newAccounts = accounts.filter((_, i) => i !== index);
-    await saveAccounts(newAccounts);
-    setAccounts(newAccounts);
-  };
-
-  const updateAccountCSR = async (index, newCsr) => {
-    const newAccounts = [...accounts];
-    newAccounts[index].csr = newCsr;
-    await saveAccounts(newAccounts);
-    setAccounts(newAccounts);
   };
 
   useEffect(() => {
@@ -73,6 +126,8 @@ const useAccounts = (initialValue = []) => {
     removeAccount,
     updateAccountCSR,
     addMultipleAccounts,
+    updateArchivedStatus,
+    saveAccounts,
   };
 };
 

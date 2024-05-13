@@ -5,8 +5,11 @@ import "../CustomColors.css";
 
 function FileUpload() {
   const [file, setFile] = useState();
-  const [userData, setUserData] = useState([]);
-  const [processedData, setProcessedData] = useState([]);
+
+  const [processedData, setProcessedData] = useState(() => {
+    const storedProcessedData = JSON.parse(localStorage.getItem("fileData"));
+    return storedProcessedData;
+  });
   const [source, setSource] = useState("PaymentUS");
   const [checkedRows, setCheckedRows] = useState({});
   const { addMultipleAccounts } = useAccounts(); // Destructure the addAccount function from the hook
@@ -31,13 +34,14 @@ function FileUpload() {
     reader.onload = () => {
       const fileData = reader.result;
 
+      // Inside handleFileUpload function
+
       // Parse CSV data
       Papa.parse(fileData, {
         header: true,
-        skipEmptyLines: true, // Skip empty lines
+        skipEmptyLines: true,
         complete: function (result) {
-          // console.log("Parsed CSV data:", result.data); // Log parsed CSV data
-          setUserData(result.data);
+          // Set user data and process it based on source
           if (source === "PaymentUS") {
             handleResultsPaymentus(result.data);
           } else if (source === "PayPoint") {
@@ -49,7 +53,6 @@ function FileUpload() {
 
     reader.readAsText(file);
   };
-
   // Function to copy account numbers of checked rows to clipboard
   const copyAccountNumbers = () => {
     const accountNumbers = [];
@@ -104,6 +107,7 @@ function FileUpload() {
     });
     // console.log("Processed PayPoint data:", processedData); // Log processed PayPoint data
     setProcessedData(processedData);
+    localStorage.setItem("fileData", JSON.stringify(processedData));
   };
 
   const handleResultsPaymentus = (data) => {
@@ -134,60 +138,56 @@ function FileUpload() {
     });
     // console.log("Processed PaymentUS data:", processedData); // Log processed PaymentUS data
     setProcessedData(processedData);
+    localStorage.setItem("fileData", JSON.stringify(processedData));
   };
-
-  useEffect(() => {
-    // Update processed data when source or userData changes
-    if (userData.length > 0) {
-      if (source === "PaymentUS") {
-        handleResultsPaymentus(userData);
-      } else if (source === "PayPoint") {
-        handleResultsPaypoint(userData);
-      }
-    }
-  }, [userData]);
-
-  // Initialize processedData state with an empty array
-  useEffect(() => {
-    setProcessedData([]);
-  }, []);
 
   const handleCheckboxChange = (key) => {
     setCheckedRows((prevState) => {
       const newState = { ...prevState, [key]: !prevState[key] };
-      console.log(`Checkbox state for ${key}:`, newState[key]);
       return newState;
     });
   };
 
   const transferAccountNumbers = async () => {
+    console.log("Transfer function called");
     const remainingAccounts = [];
-    const newAccounts = [];
+    const newAccountNumbers = [];
 
-    // Collect all the checked accounts into the `newAccounts` array
-    processedData.forEach((row) => {
+    // Iterate through processedData and filter checked rows
+    for (const row of processedData) {
       if (checkedRows[row.key]) {
-        newAccounts.push({
-          accountNumber: row.accountNumber,
-          status: "Incomplete",
-          csr: "",
-          createdAt: new Date().toLocaleString(),
-          completedAt: "Incomplete",
-        });
+        newAccountNumbers.push(row.accountNumber);
       } else {
         remainingAccounts.push(row); // Keep the account in display if not checked
       }
-    });
+    }
 
-    // Use the new `addMultipleAccounts` function
-    await addMultipleAccounts(newAccounts);
+    // Add all new accounts to the state and localStorage
+    if (newAccountNumbers.length > 0) {
+      await addMultipleAccounts(newAccountNumbers);
+    }
+
+    console.log("All accounts added");
 
     // Update the processed data to only show remaining accounts
     setProcessedData(remainingAccounts);
-
     // Reset checked rows since they are now transferred or no longer displayed
     setCheckedRows({});
+
+    localStorage.setItem("fileData", JSON.stringify(remainingAccounts));
+    console.log("Updated fileData in localStorage: ", remainingAccounts);
   };
+  const clearData = () => {
+    setProcessedData([]);
+    localStorage.setItem("fileData", JSON.stringify([]));
+  };
+
+  useEffect(() => {
+    const storedData = JSON.parse(localStorage.getItem("fileData"));
+    if (storedData) {
+      setProcessedData(storedData);
+    }
+  }, []);
 
   return (
     <div className="container">
@@ -206,6 +206,9 @@ function FileUpload() {
           onClick={transferAccountNumbers}
         >
           Transfer to Call List
+        </button>
+        <button className="btn btn-danger" onClick={clearData}>
+          Clear Data
         </button>
       </div>
       <div className="form-check">
@@ -238,7 +241,7 @@ function FileUpload() {
       </div>
 
       <div>
-        {processedData.length > 0 && (
+        {processedData && processedData.length > 0 && (
           <table className="table table-striped">
             <thead>
               <tr>
@@ -271,7 +274,11 @@ function FileUpload() {
                   <td>{row.amount}</td>
                   <td>{row.accountNumber}</td>
                   <td>{row.customerName}</td>
-                  <td>{row.paymentDate.toLocaleDateString()}</td>
+                  <td>
+                    {row.paymentDate instanceof Date
+                      ? row.paymentDate.toLocaleDateString()
+                      : row.paymentDate}
+                  </td>
                   <td>{row.paymentType}</td>
                   <td>{row.paymentMethod}</td>
                   <td>{row.paymentStatus}</td>

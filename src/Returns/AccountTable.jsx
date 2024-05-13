@@ -1,14 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import "./AccountTable.css";
 import AccountCount from "./AccountCount";
 import useAccounts from "../hooks/useAccounts";
 import useCsrs from "../hooks/useCsrs";
 
 function AccountTable() {
-  const { accounts, updateAccountCSR, updateAccountStatus, removeAccount } =
-    useAccounts();
+  const {
+    accounts,
+    updateAccountCSR,
+    updateAccountStatus,
+    removeAccount,
+    updateArchivedStatus,
+    addAccount,
+  } = useAccounts();
   const { csrs, addCsr, removeCsr } = useCsrs();
   const [newCsr, setNewCsr] = useState("");
+  const [newAccountNumber, setNewAccountNumber] = useState("");
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "none",
+  });
 
   const handleNewCSRChange = (e) => setNewCsr(e.target.value);
   const handleAddCSR = () => {
@@ -18,21 +29,24 @@ function AccountTable() {
     }
   };
 
-  // Inside AccountTable component
-  const handleCSRChange = (index, e) => {
-    updateAccountCSR(index, e.target.value);
+  const handleCSRChange = (accountKey, e) => {
+    updateAccountCSR(accountKey, e.target.value);
   };
 
-  const handleCompletionCheckBoxChange = (index, e) => {
+  const handleCompletionCheckBoxChange = (accountKey, e) => {
     const status = e.target.checked ? "Completed" : "Incomplete";
     const completedAt = e.target.checked
       ? new Date().toLocaleString()
       : "Incomplete";
-    updateAccountStatus(index, status, completedAt);
+    updateAccountStatus(accountKey, status, completedAt);
   };
 
-  const handleDeleteAccount = (index) => {
-    removeAccount(index);
+  const handleDeleteAccount = (accountKey) => {
+    removeAccount(accountKey);
+  };
+
+  const handleArchiveAccount = (accountKey) => {
+    updateArchivedStatus(accountKey);
   };
 
   const handleExportAccounts = () => {
@@ -48,22 +62,99 @@ function AccountTable() {
     document.body.removeChild(link);
   };
 
+  const handleAddAccount = () => {
+    if (newAccountNumber.trim() !== "") {
+      addAccount(newAccountNumber); // Call the addAccount function with the new account
+      setNewAccountNumber(""); // Clear input field
+    }
+  };
+
+  // Filter out archived accounts
+  const filteredAccounts = accounts.filter(
+    (account) => account.archived === false,
+  );
+
+  const requestSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedAccounts = useMemo(() => {
+    return [...filteredAccounts].sort((a, b) => {
+      const key = sortConfig.key;
+      if (key === "status") {
+        // Assuming 'status' is used for the Completed checkbox
+        // Sort boolean status values (assuming 'Completed' > 'Incomplete')
+        return sortConfig.direction === "ascending"
+          ? a.status === "Completed" && b.status !== "Completed"
+            ? -1
+            : a.status !== "Completed" && b.status === "Completed"
+              ? 1
+              : 0
+          : a.status !== "Completed" && b.status === "Completed"
+            ? -1
+            : a.status === "Completed" && b.status !== "Completed"
+              ? 1
+              : 0;
+      } else if (key === "csr") {
+        // Alphabetical sorting for CSR
+        return sortConfig.direction === "ascending"
+          ? a.csr.localeCompare(b.csr)
+          : b.csr.localeCompare(a.csr);
+      } else {
+        // Numeric or string comparison for other fields
+        if (a[key] < b[key]) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (a[key] > b[key]) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      }
+    });
+  }, [filteredAccounts, sortConfig]);
+
   return (
     <div>
       <div className="table-container">
-        <table className="table">
+        <table className="table table-striped">
           <thead>
             <tr>
               <th>Complete</th>
-              <th>Account Number</th>
-              <th>Status</th>
-              <th>CSR</th>
+              <th onClick={() => requestSort("accountNumber")}>
+                Account Number{" "}
+                {sortConfig.key === "accountNumber"
+                  ? sortConfig.direction === "ascending"
+                    ? "🔼"
+                    : "🔽"
+                  : ""}
+              </th>
+              <th onClick={() => requestSort("status")}>
+                Status{" "}
+                {sortConfig.key === "status"
+                  ? sortConfig.direction === "ascending"
+                    ? "🔼"
+                    : "🔽"
+                  : ""}
+              </th>
+              <th onClick={() => requestSort("csr")}>
+                CSR{" "}
+                {sortConfig.key === "csr"
+                  ? sortConfig.direction === "ascending"
+                    ? "🔼"
+                    : "🔽"
+                  : ""}
+              </th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {accounts.map((account, index) => (
+            {sortedAccounts.map((account) => (
               <tr
-                key={index}
+                key={account.key}
                 className={
                   account.status === "Completed" ? "table-success" : ""
                 }
@@ -73,7 +164,9 @@ function AccountTable() {
                     className="form-check-input"
                     type="checkbox"
                     checked={account.status === "Completed"}
-                    onChange={(e) => handleCompletionCheckBoxChange(index, e)}
+                    onChange={(e) =>
+                      handleCompletionCheckBoxChange(account.key, e)
+                    }
                   />
                 </td>
                 <td>{account.accountNumber}</td>
@@ -81,8 +174,8 @@ function AccountTable() {
                 <td>
                   <select
                     className="form-select"
-                    value={account.csr} // Ensuring undefined values don't cause issues
-                    onChange={(e) => handleCSRChange(index, e)}
+                    value={account.csr}
+                    onChange={(e) => handleCSRChange(account.key, e)}
                   >
                     <option value="">Select CSR</option>
                     {csrs.map((csr, idx) => (
@@ -95,9 +188,15 @@ function AccountTable() {
                 <td>
                   <button
                     className="btn btn-danger btn-sm"
-                    onClick={() => handleDeleteAccount(index)}
+                    onClick={() => handleDeleteAccount(account.key)}
                   >
                     Delete
+                  </button>
+                  <button
+                    className="btn btn-warning btn-sm mx-2"
+                    onClick={() => handleArchiveAccount(account.key)}
+                  >
+                    Archive
                   </button>
                 </td>
               </tr>
@@ -108,7 +207,7 @@ function AccountTable() {
 
       <div className="row">
         <div className="col-md-6">
-          <AccountCount accounts={accounts} csrs={csrs} />
+          <AccountCount accounts={filteredAccounts} csrs={csrs} />
         </div>
         <div>
           <button
@@ -181,8 +280,21 @@ function AccountTable() {
         </div>
 
         <div>
+          <input
+            type="text"
+            className="form-control"
+            value={newAccountNumber}
+            onChange={(e) => setNewAccountNumber(e.target.value)}
+            placeholder="Enter New Account Number"
+          />
           <button
-            className="btn custom-btn-blue"
+            className="btn custom-btn-blue my-2"
+            onClick={handleAddAccount}
+          >
+            Add Account
+          </button>
+          <button
+            className="btn custom-btn-blue m-2"
             onClick={handleExportAccounts}
           >
             Export Accounts
