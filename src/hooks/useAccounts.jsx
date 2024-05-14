@@ -3,11 +3,12 @@ import axios from "axios";
 
 const useAccounts = (initialValue = []) => {
   const [accounts, setAccounts] = useState(initialValue);
-  const apiAddress = "https://164.92.120.154:3000";
+
+  const API_BASE_URL = "https://returns-server.erikengvall.com";
 
   const fetchAccounts = async () => {
     try {
-      const response = await axios.get(`${apiAddress}/api/accounts`);
+      const response = await axios.get(`${API_BASE_URL}/api/accounts`);
       setAccounts(response.data);
     } catch (error) {
       console.error("Failed to fetch accounts:", error);
@@ -16,7 +17,7 @@ const useAccounts = (initialValue = []) => {
 
   const addAccount = async (accountNumber) => {
     try {
-      const response = await axios.post(`${apiAddress}/api/accounts`, {
+      const response = await axios.post(`${API_BASE_URL}/api/accounts`, {
         accountNumber,
         status: "Incomplete",
         csr: "",
@@ -34,7 +35,7 @@ const useAccounts = (initialValue = []) => {
     try {
       const updatedAccounts = await Promise.all(
         newAccountNumbers.map((accountNumber) =>
-          axios.post(`${apiAddress}/api/accounts`, {
+          axios.post(`${API_BASE_URL}/api/accounts`, {
             accountNumber,
             status: "Incomplete",
             csr: "",
@@ -65,7 +66,7 @@ const useAccounts = (initialValue = []) => {
         archived: !account.archived,
       };
       const response = await axios.put(
-        `${apiAddress}/api/accounts/${accountKey}`,
+        `${API_BASE_URL}/api/accounts/${accountKey}`,
         updatedAccount,
       );
       setAccounts(
@@ -89,7 +90,7 @@ const useAccounts = (initialValue = []) => {
         completedAt,
       };
       const response = await axios.put(
-        `${apiAddress}/api/accounts/${accountKey}`,
+        `${API_BASE_URL}/api/accounts/${accountKey}`,
         updatedAccount,
       );
       setAccounts(
@@ -102,7 +103,7 @@ const useAccounts = (initialValue = []) => {
 
   const removeAccount = async (accountKey) => {
     try {
-      await axios.delete(`${apiAddress}/api/accounts/${accountKey}`);
+      await axios.delete(`${API_BASE_URL}/api/accounts/${accountKey}`);
       setAccounts(accounts.filter((acc) => acc.key !== accountKey));
     } catch (error) {
       console.error("Failed to remove account:", error);
@@ -121,7 +122,7 @@ const useAccounts = (initialValue = []) => {
         csr: newCsr,
       };
       const response = await axios.put(
-        `${apiAddress}/api/accounts/${accountKey}`,
+        `${API_BASE_URL}/api/accounts/${accountKey}`,
         updatedAccount,
       );
       setAccounts(
