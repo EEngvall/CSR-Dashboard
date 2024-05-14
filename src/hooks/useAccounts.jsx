@@ -3,7 +3,7 @@ import axios from "axios";
 
 const useAccounts = (initialValue = []) => {
   const [accounts, setAccounts] = useState(initialValue);
-  const apiAddress = "http://164.92.120.154";
+  const apiAddress = "https://164.92.120.154";
 
   const fetchAccounts = async () => {
     try {
