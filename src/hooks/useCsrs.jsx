@@ -18,8 +18,6 @@ function useCsrs(initialCsrs = []) {
             } catch (error) {
                 setError(error);
                 console.error("Failed to fetch CSRs:", error);
-            } finally {
-                setLoading(false);
             }
         };
 

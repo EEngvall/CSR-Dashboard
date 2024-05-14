@@ -15,7 +15,7 @@ function AccountTable() {
     addAccount,
   } = useAccounts();
   const { csrs, addCsr, removeCsr } = useCsrs();
-  const [newCsr, setNewCsr] = useState("");
+  const [newCsrName, setNewCsrName] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
   const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
   const [sortConfig, setSortConfig] = useState({
@@ -23,11 +23,11 @@ function AccountTable() {
     direction: "none",
   });
 
-  const handleNewCSRChange = (e) => setNewCsr(e.target.value);
+  const handleNewCSRChange = (e) => setNewCsrName(e.target.value);
   const handleAddCSR = () => {
-    if (newCsr.trim() !== "") {
-      addCsr(newCsr);
-      setNewCsr(""); // Clear the input field
+    if (newCsrName.trim() !== "") {
+      addCsr({ name: newCsrName, description: "" }); // Add a new CSR object
+      setNewCsrName(""); // Clear the input field
     }
   };
 
@@ -190,9 +190,9 @@ function AccountTable() {
                     onChange={(e) => handleCSRChange(account.key, e)}
                   >
                     <option value="">Select CSR</option>
-                    {csrs.map((csr, idx) => (
-                      <option key={idx} value={csr}>
-                        {csr}
+                    {csrs.map((csr) => (
+                      <option key={csr.key} value={csr.name}>
+                        {csr.name}
                       </option>
                     ))}
                   </select>
@@ -231,7 +231,7 @@ function AccountTable() {
 
       <div className="row">
         <div className="col-md-6">
-          <AccountCount accounts={filteredAccounts} csrs={csrs} />
+          <AccountCount accounts={accounts} csrs={csrs} />
         </div>
         <div>
           <button
@@ -266,7 +266,7 @@ function AccountTable() {
               <input
                 type="text"
                 className="form-control"
-                value={newCsr}
+                value={newCsrName}
                 onChange={handleNewCSRChange}
                 placeholder="Enter New CSR"
               />
@@ -284,13 +284,13 @@ function AccountTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {csrs.map((csr, index) => (
-                    <tr key={index}>
-                      <td>{csr}</td>
+                  {csrs.map((csr) => (
+                    <tr key={csr.key}>
+                      <td>{csr.name}</td>
                       <td>
                         <button
                           className="btn btn-danger btn-sm"
-                          onClick={() => removeCsr(csr)}
+                          onClick={() => removeCsr(csr.key)}
                         >
                           Remove
                         </button>
