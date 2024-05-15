@@ -1,23 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Offcanvas, Button, Table, Collapse } from "react-bootstrap";
+import useCases from "./useCases";
 import "./WorkOrderTracker.css";
 import ArchivedCasesOffCanvas from "./ArchivedCasesOffCanvas";
 
 const WorkOrderTracker = () => {
-  const [cases, setCases] = useState(() => {
-    const storedCases = JSON.parse(localStorage.getItem("cases"));
-    return storedCases ? storedCases : [];
-  });
+  const { cases, addCase, updateCase, deleteCase } = useCases([]);
   const [nextCaseId, setNextCaseId] = useState(2);
   const [editingCaseId, setEditingCaseId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [historyCase, setHistoryCase] = useState(null);
-  const [showNoteInput, setShowNoteInput] = useState(null); // State to track if note input is open
-  const [currentNote, setCurrentNote] = useState(""); // State to track current note being entered
+  const [showNoteInput, setShowNoteInput] = useState(null);
+  const [currentNote, setCurrentNote] = useState("");
   const [openCases, setOpenCases] = useState([]);
   const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
 
-  // Define stages and their order
   const stages = [
     "Email Received",
     "Verified Meter Card(s)",
@@ -30,151 +27,102 @@ const WorkOrderTracker = () => {
     "Engineer/Contractor Emailed",
   ];
 
-  // Load cases from local storage on mount and initialize nextCaseId based on the highest existing case ID
-  useEffect(() => {
-    const savedCases = JSON.parse(localStorage.getItem("cases")) || [];
-    setCases(savedCases);
-
-    // Calculate the maximum ID from the loaded cases
-    const maxId = savedCases.reduce(
-      (max, caseItem) => Math.max(max, caseItem.id),
-      1,
-    );
-
-    // Initialize nextCaseId one greater than the maximum ID
-    setNextCaseId(maxId + 1);
-  }, []);
-
-  // Save cases to local storage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("cases", JSON.stringify(cases));
-  }, [cases]);
-
-  // Function to toggle open/closed state of a case
-  const toggleCase = (caseId) => {
-    setOpenCases((prevOpenCases) =>
-      prevOpenCases.includes(caseId)
-        ? prevOpenCases.filter((id) => id !== caseId)
-        : [...prevOpenCases, caseId],
-    );
-  };
-
   const getCurrentTimestamp = () => {
     const now = new Date();
     const hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, "0"); // Pad minutes with leading zero if necessary
+    const minutes = now.getMinutes().toString().padStart(2, "0");
     const time = `${hours % 12 || 12}:${minutes}${hours >= 12 ? "PM" : "AM"}`;
     const date = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
     return `${time} ${date}`;
   };
 
   const handleAddAddress = (caseId) => {
-    const newCases = cases.map((item) =>
-      item.id === caseId
-        ? {
-            ...item,
-            addresses: [
-              ...item.addresses,
-              {
-                caseId: "",
-                address: "",
-                stage: "Address Received",
-                history: [],
-              },
-            ],
-          }
-        : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = {
+      ...caseToUpdate,
+      addresses: [
+        ...caseToUpdate.addresses,
+        {
+          caseId: "",
+          address: "",
+          stage: "Address Received",
+          history: [],
+        },
+      ],
+    };
+    updateCase(caseId, updatedCase);
   };
 
   const handleRemoveAddress = (caseId, addressIndex) => {
-    const newCases = cases.map((item) =>
-      item.id === caseId
-        ? {
-            ...item,
-            addresses: item.addresses.filter(
-              (_, index) => index !== addressIndex,
-            ),
-          }
-        : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = {
+      ...caseToUpdate,
+      addresses: caseToUpdate.addresses.filter(
+        (_, index) => index !== addressIndex
+      ),
+    };
+    updateCase(caseId, updatedCase);
   };
 
   const handleAddressChange = (caseId, addressIndex, event) => {
-    const newCases = cases.map((item) =>
-      item.id === caseId
-        ? {
-            ...item,
-            addresses: item.addresses.map((address, index) =>
-              index === addressIndex
-                ? { ...address, address: event.target.value }
-                : address,
-            ),
-          }
-        : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = {
+      ...caseToUpdate,
+      addresses: caseToUpdate.addresses.map((address, index) =>
+        index === addressIndex
+          ? { ...address, address: event.target.value }
+          : address
+      ),
+    };
+    updateCase(caseId, updatedCase);
   };
 
   const handleAddressStageChange = (caseId, addressIndex, event) => {
     const timestamp = getCurrentTimestamp();
-    const newCases = cases.map((item) =>
-      item.id === caseId
-        ? {
-            ...item,
-            addresses: item.addresses.map((address, index) =>
-              index === addressIndex
-                ? {
-                    ...address,
-                    stage: event.target.value,
-                    history: [
-                      ...address.history,
-                      `${event.target.value} (${timestamp})`,
-                    ],
-                  }
-                : address,
-            ),
-          }
-        : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = {
+      ...caseToUpdate,
+      addresses: caseToUpdate.addresses.map((address, index) =>
+        index === addressIndex
+          ? {
+              ...address,
+              stage: event.target.value,
+              history: [
+                ...address.history,
+                `${event.target.value} (${timestamp})`,
+              ],
+            }
+          : address
+      ),
+    };
+    updateCase(caseId, updatedCase);
   };
 
   const handleCaseStageChange = (caseId, direction) => {
-    const currentIndex = stages.indexOf(
-      cases.find((c) => c.id === caseId).stage,
-    );
-    const currentStage = cases.find((c) => c.id === caseId).stage;
+    const currentCase = cases.find((c) => c.id === caseId);
+    const currentIndex = stages.indexOf(currentCase.stage);
+    const currentStage = currentCase.stage;
     const previousStage = currentIndex === 0 ? "" : stages[currentIndex - 1];
     const newStage =
       direction === "next" ? stages[currentIndex + 1] : previousStage;
     const timestamp = getCurrentTimestamp();
-    const newCases = cases.map((item) =>
-      item.id === caseId
-        ? {
-            ...item,
-            stage: newStage,
-            previousStage,
-            timestamp,
-            history: item.history
-              ? [
-                  ...item.history,
-                  `Moved from ${currentStage} to ${newStage} at ${timestamp}`,
-                ]
-              : [`Moved from ${currentStage} to ${newStage} at ${timestamp}`],
-          }
-        : item,
-    );
-    setCases(newCases);
+    const updatedCase = {
+      ...currentCase,
+      stage: newStage,
+      previousStage,
+      timestamp,
+      history: [
+        ...(currentCase.history || []),
+        `Moved from ${currentStage} to ${newStage} at ${timestamp}`,
+      ],
+    };
+    updateCase(caseId, updatedCase);
   };
 
   const handleCaseNameChange = (caseId, newName) => {
-    const newCases = cases.map((item) =>
-      item.id === caseId ? { ...item, name: newName } : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = { ...caseToUpdate, name: newName };
+    updateCase(caseId, updatedCase);
   };
 
   const handleEditCaseName = (caseId) => {
@@ -192,29 +140,26 @@ const WorkOrderTracker = () => {
       name: "",
       stage: "Email Received",
       addresses: [{ address: "", stage: "Address Received", history: [] }],
-      notes: [], // Add a 'notes' array
-      timestamp: getCurrentTimestamp(),
-      history: [`Email Received (${timestamp})`], // Record initial status in history
+      notes: [],
+      timestamp,
+      history: [`Email Received (${timestamp})`],
       status: "Active",
     };
-    setCases([...cases, newCase]);
+    addCase(newCase);
     setNextCaseId(nextCaseId + 1);
   };
 
   const handleCaseIdChange = (caseId, addressIndex, event) => {
-    const newCases = cases.map((item) =>
-      item.id === caseId
-        ? {
-            ...item,
-            addresses: item.addresses.map((address, index) =>
-              index === addressIndex
-                ? { ...address, caseId: event.target.value }
-                : address,
-            ),
-          }
-        : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = {
+      ...caseToUpdate,
+      addresses: caseToUpdate.addresses.map((address, index) =>
+        index === addressIndex
+          ? { ...address, caseId: event.target.value }
+          : address
+      ),
+    };
+    updateCase(caseId, updatedCase);
   };
 
   const handleShowHistory = (caseId) => {
@@ -227,24 +172,20 @@ const WorkOrderTracker = () => {
   };
 
   const handleCloseCase = (caseId) => {
-    const newCases = cases.map((item) =>
-      item.id === caseId ? { ...item, status: "Archived" } : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = { ...caseToUpdate, status: "Archived" };
+    updateCase(caseId, updatedCase);
   };
 
-  // Function to toggle note input visibility
   const handleToggleNoteInput = (caseId) => {
     setShowNoteInput((prevId) => (prevId === caseId ? null : caseId));
-    setCurrentNote(""); // Reset current note
+    setCurrentNote("");
   };
 
-  // Function to handle note input change
   const handleNoteChange = (event) => {
     setCurrentNote(event.target.value);
   };
 
-  // Function to handle copying addresses and case numbers to clipboard
   const handleCopyAddresses = (caseId) => {
     const currentCase = cases.find((item) => item.id === caseId);
     const addressesString = currentCase.addresses
@@ -257,70 +198,56 @@ const WorkOrderTracker = () => {
     const textToCopy = `Created Case ID: ${caseId} for device install at ${address}`;
     navigator.clipboard
       .writeText(textToCopy)
-      .then(() => {
-        // Optional: Provide feedback to the user that the text has been copied
-        console.log("Text copied to clipboard:", textToCopy);
-      })
-      .catch((error) => {
-        console.error("Error copying text to clipboard:", error);
-      });
+      .then(() => console.log("Text copied to clipboard:", textToCopy))
+      .catch((error) =>
+        console.error("Error copying text to clipboard:", error)
+      );
   };
 
-  // Function to add a note to the case
   const handleAddNote = (caseId) => {
     const timestamp = getCurrentTimestamp();
-    const newCases = cases.map((item) =>
-      item.id === caseId
-        ? {
-            ...item,
-            notes: [...item.notes, `${currentNote} (${timestamp})`],
-          }
-        : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = {
+      ...caseToUpdate,
+      notes: [...caseToUpdate.notes, `${currentNote} (${timestamp})`],
+    };
+    updateCase(caseId, updatedCase);
     setShowNoteInput(null);
-    setCurrentNote(""); // Reset current note
+    setCurrentNote("");
   };
 
   const handleRemoveNote = (caseId, noteIndex) => {
-    const newCases = cases.map((item) =>
-      item.id === caseId
-        ? {
-            ...item,
-            notes: item.notes.filter((_, index) => index !== noteIndex),
-          }
-        : item,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = {
+      ...caseToUpdate,
+      notes: caseToUpdate.notes.filter((_, index) => index !== noteIndex),
+    };
+    updateCase(caseId, updatedCase);
   };
 
   const handleReopenCase = (caseId) => {
-    const newCases = cases.map((caseItem) =>
-      caseItem.id === caseId ? { ...caseItem, status: "Active" } : caseItem,
-    );
-    setCases(newCases);
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = { ...caseToUpdate, status: "Active" };
+    updateCase(caseId, updatedCase);
   };
 
-  // Function to open the OffCanvas component
   const handleOpenArchivedOffCanvas = () => {
     setShowArchivedOffCanvas(true);
   };
 
-  // Function to close the OffCanvas component
   const handleCloseArchivedOffCanvas = () => {
     setShowArchivedOffCanvas(false);
   };
 
-  // Function to export cases data to a JSON file
   const handleExportData = () => {
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
     const data = JSON.stringify(cases, null, 2);
-    const fileName = `CSR_WORK_ORDER_CASES_${timestamp}.json`; // Add timestamp to file name
+    const fileName = `CSR_WORK_ORDER_CASES_${timestamp}.json`;
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = fileName; // Set the file name here
+    a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -331,20 +258,19 @@ const WorkOrderTracker = () => {
     reader.onload = (e) => {
       try {
         const importedCases = JSON.parse(e.target.result);
-        console.log("Imported Cases:", importedCases);
         setCases(importedCases);
-        localStorage.setItem("cases", JSON.stringify(importedCases));
       } catch (error) {
         console.error("Error importing data:", error);
       }
     };
     reader.readAsText(file);
   };
+
   return (
     <div className="container mt-4">
       <h2 className="text-center">Work Order Tracker</h2>
       {cases
-        .filter((item) => item.status === "Active") // Filter out archived cases
+        .filter((item) => item.status === "Active")
         .map((item) => (
           <div key={item.id} className="mb-4">
             <div
@@ -359,7 +285,7 @@ const WorkOrderTracker = () => {
             >
               <h4>
                 {editingCaseId === item.id ? (
-                  <React.Fragment>
+                  <>
                     <input
                       type="text"
                       className="form-control mb-2"
@@ -376,9 +302,9 @@ const WorkOrderTracker = () => {
                     >
                       Save
                     </button>
-                  </React.Fragment>
+                  </>
                 ) : (
-                  <React.Fragment>
+                  <>
                     {item.name ? `Case: ${item.name}` : `Case # ${item.id}`}
                     <button
                       className="btn btn-outline-secondary btn-sm ms-2"
@@ -387,7 +313,7 @@ const WorkOrderTracker = () => {
                     >
                       Edit
                     </button>
-                  </React.Fragment>
+                  </>
                 )}
               </h4>
             </div>
@@ -450,14 +376,14 @@ const WorkOrderTracker = () => {
                       value={address.caseId}
                       onChange={(event) =>
                         handleCaseIdChange(item.id, index, event)
-                      } // Add handleCaseIdChange function
+                      }
                     />
                     <Button
                       variant="secondary"
                       onClick={() =>
                         handleCopyCustomerContact(
                           address.address,
-                          address.caseId,
+                          address.caseId
                         )
                       }
                     >
@@ -515,7 +441,6 @@ const WorkOrderTracker = () => {
                     </button>
                   </div>
                 )}
-                {/* Display notes for the case */}
                 <div className="mt-2">
                   {item.notes.map((note, index) => (
                     <div key={index} className="d-flex align-items-center mb-2">
@@ -568,7 +493,6 @@ const WorkOrderTracker = () => {
         />
       </div>
 
-      {/* History Offcanvas */}
       <Offcanvas show={showHistory} onHide={handleCloseHistory}>
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>Case History</Offcanvas.Title>
@@ -616,7 +540,6 @@ const WorkOrderTracker = () => {
           )}
         </Offcanvas.Body>
       </Offcanvas>
-      
     </div>
   );
 };
