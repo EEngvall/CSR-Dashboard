@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Offcanvas, Button, Table, Collapse } from "react-bootstrap";
-import useCases from "./useCases";
+import useCases from "../hooks/useCases";
 import "./WorkOrderTracker.css";
 import ArchivedCasesOffCanvas from "./ArchivedCasesOffCanvas";
 
