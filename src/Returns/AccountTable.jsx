@@ -4,6 +4,7 @@ import AccountCount from "./AccountCount";
 import ArchivedOffCanvasReturns from "./ArchivedOffCanvasReturns";
 import useAccounts from "../hooks/useAccounts";
 import useCsrs from "../hooks/useCsrs";
+import ReturnStatusOffCanvas from "./ReturnStatusOffCanvas";
 
 function AccountTable() {
   const {
@@ -18,6 +19,8 @@ function AccountTable() {
   const [newCsrName, setNewCsrName] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
   const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
+  const [showStatusOffCanvas, setShowStatusOffCanvas] = useState(false);
+
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: "none",
@@ -129,6 +132,17 @@ function AccountTable() {
     setShowArchivedOffCanvas(false);
   };
 
+  // Function to open the OffCanvas component
+  const handleOpenStatusOffCanvas = () => {
+    setShowStatusOffCanvas(true);
+    console.log("Open");
+  };
+
+  // Function to close the OffCanvas component
+  const handleCloseStatusOffCanvas = () => {
+    setShowStatusOffCanvas(false);
+  };
+
   return (
     <div>
       <div className="table-container">
@@ -217,7 +231,7 @@ function AccountTable() {
         </table>
       </div>
       <button
-        className="btn custom-btn-blue mx-2 mb-5"
+        className="btn custom-btn-blue mx-2 my-5"
         onClick={handleOpenArchivedOffCanvas}
       >
         Open Archived Cases
@@ -227,6 +241,16 @@ function AccountTable() {
         updateArchivedStatus={handleArchiveAccount}
         show={showArchivedOffCanvas}
         handleClose={handleCloseArchivedOffCanvas}
+      />
+      <button
+        className="btn custom-btn-blue m-2"
+        onClick={handleOpenStatusOffCanvas}
+      >
+        Open Returns Souce Status
+      </button>
+      <ReturnStatusOffCanvas
+        show={showStatusOffCanvas}
+        handleClose={handleCloseStatusOffCanvas}
       />
 
       <div className="row">
