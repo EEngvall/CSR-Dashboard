@@ -304,21 +304,8 @@ function AccountTable() {
         </div>
 
         <div>
-          <input
-            type="text"
-            className="form-control"
-            value={newAccountNumber}
-            onChange={(e) => setNewAccountNumber(e.target.value)}
-            placeholder="Enter New Account Number"
-          />
           <button
             className="btn custom-btn-blue my-2"
-            onClick={handleAddAccount}
-          >
-            Add Account
-          </button>
-          <button
-            className="btn custom-btn-blue m-2"
             onClick={handleExportAccounts}
           >
             Export Accounts
