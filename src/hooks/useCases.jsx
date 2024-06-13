@@ -25,12 +25,13 @@ const useCases = (initialValue = []) => {
 
   const updateCase = async (id, updatedCase) => {
     try {
+      const { id: _, ...caseWithoutId } = updatedCase; // Exclude id
       const response = await axios.put(
         `${API_BASE_URL}/api/cases/${id}`,
-        updatedCase
+        caseWithoutId,
       );
       setCases((prevCases) =>
-        prevCases.map((c) => (c.id === id ? response.data : c))
+        prevCases.map((c) => (c.id === id ? response.data : c)),
       );
     } catch (error) {
       console.error("Failed to update case:", error);

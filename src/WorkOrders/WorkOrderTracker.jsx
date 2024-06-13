@@ -14,6 +14,7 @@ const WorkOrderTracker = () => {
   const [currentNote, setCurrentNote] = useState("");
   const [openCases, setOpenCases] = useState([]);
   const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
+  const [newCaseName, setNewCaseName] = useState(""); // State for new case name
 
   const stages = [
     "Email Received",
@@ -58,7 +59,7 @@ const WorkOrderTracker = () => {
     const updatedCase = {
       ...caseToUpdate,
       addresses: caseToUpdate.addresses.filter(
-        (_, index) => index !== addressIndex
+        (_, index) => index !== addressIndex,
       ),
     };
     updateCase(caseId, updatedCase);
@@ -71,7 +72,7 @@ const WorkOrderTracker = () => {
       addresses: caseToUpdate.addresses.map((address, index) =>
         index === addressIndex
           ? { ...address, address: event.target.value }
-          : address
+          : address,
       ),
     };
     updateCase(caseId, updatedCase);
@@ -92,7 +93,7 @@ const WorkOrderTracker = () => {
                 `${event.target.value} (${timestamp})`,
               ],
             }
-          : address
+          : address,
       ),
     };
     updateCase(caseId, updatedCase);
@@ -119,17 +120,15 @@ const WorkOrderTracker = () => {
     updateCase(caseId, updatedCase);
   };
 
-  const handleCaseNameChange = (caseId, newName) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = { ...caseToUpdate, name: newName };
-    updateCase(caseId, updatedCase);
-  };
-
   const handleEditCaseName = (caseId) => {
     setEditingCaseId(caseId);
+    setNewCaseName(cases.find((c) => c.id === caseId)?.name || ""); // Set current case name in state
   };
 
   const handleSaveCaseName = (caseId) => {
+    const caseToUpdate = cases.find((c) => c.id === caseId);
+    const updatedCase = { ...caseToUpdate, name: newCaseName };
+    updateCase(caseId, updatedCase);
     setEditingCaseId(null);
   };
 
@@ -156,7 +155,7 @@ const WorkOrderTracker = () => {
       addresses: caseToUpdate.addresses.map((address, index) =>
         index === addressIndex
           ? { ...address, caseId: event.target.value }
-          : address
+          : address,
       ),
     };
     updateCase(caseId, updatedCase);
@@ -200,7 +199,7 @@ const WorkOrderTracker = () => {
       .writeText(textToCopy)
       .then(() => console.log("Text copied to clipboard:", textToCopy))
       .catch((error) =>
-        console.error("Error copying text to clipboard:", error)
+        console.error("Error copying text to clipboard:", error),
       );
   };
 
@@ -266,6 +265,15 @@ const WorkOrderTracker = () => {
     reader.readAsText(file);
   };
 
+  // Function to toggle open/closed state of a case
+  const toggleCase = (caseId) => {
+    setOpenCases((prevOpenCases) =>
+      prevOpenCases.includes(caseId)
+        ? prevOpenCases.filter((id) => id !== caseId)
+        : [...prevOpenCases, caseId],
+    );
+  };
+
   return (
     <div className="container mt-4">
       <h2 className="text-center">Work Order Tracker</h2>
@@ -290,10 +298,8 @@ const WorkOrderTracker = () => {
                       type="text"
                       className="form-control mb-2"
                       placeholder="Enter case name"
-                      value={item.name}
-                      onChange={(event) =>
-                        handleCaseNameChange(item.id, event.target.value)
-                      }
+                      value={newCaseName}
+                      onChange={(e) => setNewCaseName(e.target.value)} // Update case name in state
                     />
                     <button
                       className="btn btn-success"
@@ -383,7 +389,7 @@ const WorkOrderTracker = () => {
                       onClick={() =>
                         handleCopyCustomerContact(
                           address.address,
-                          address.caseId
+                          address.caseId,
                         )
                       }
                     >
@@ -443,7 +449,10 @@ const WorkOrderTracker = () => {
                 )}
                 <div className="mt-2">
                   {item.notes.map((note, index) => (
-                    <div key={index} className="d-flex align-items-center mb-2">
+                    <div
+                      key={`${item.id}-note-${index}`}
+                      className="d-flex align-items-center mb-2"
+                    >
                       <div>{note}</div>
                       <button
                         className="btn btn-sm btn-close ms-2"
@@ -510,14 +519,14 @@ const WorkOrderTracker = () => {
                 <tbody>
                   {historyCase.history &&
                     historyCase.history.map((event, index) => (
-                      <tr key={index}>
+                      <tr key={`${historyCase.id}-history-${index}`}>
                         <td>{event}</td>
                       </tr>
                     ))}
                 </tbody>
               </Table>
               {historyCase.addresses.map((address, index) => (
-                <div key={index}>
+                <div key={`${historyCase.id}-address-history-${index}`}>
                   <h5>{address.address} History:</h5>
                   <Table striped bordered hover>
                     <thead>
@@ -528,7 +537,9 @@ const WorkOrderTracker = () => {
                     <tbody>
                       {address.history &&
                         address.history.map((event, idx) => (
-                          <tr key={idx}>
+                          <tr
+                            key={`${historyCase.id}-address-${index}-history-${idx}`}
+                          >
                             <td>{event}</td>
                           </tr>
                         ))}
