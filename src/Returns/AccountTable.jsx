@@ -4,6 +4,7 @@ import AccountCount from "./AccountCount";
 import ArchivedOffCanvasReturns from "./ArchivedOffCanvasReturns";
 import useAccounts from "../hooks/useAccounts";
 import useCsrs from "../hooks/useCsrs";
+import ReturnStatusOffCanvas from "./ReturnStatusOffCanvas";
 
 function AccountTable() {
   const {
@@ -15,19 +16,21 @@ function AccountTable() {
     addAccount,
   } = useAccounts();
   const { csrs, addCsr, removeCsr } = useCsrs();
-  const [newCsr, setNewCsr] = useState("");
+  const [newCsrName, setNewCsrName] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
   const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
+  const [showStatusOffCanvas, setShowStatusOffCanvas] = useState(false);
+
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: "none",
   });
 
-  const handleNewCSRChange = (e) => setNewCsr(e.target.value);
+  const handleNewCSRChange = (e) => setNewCsrName(e.target.value);
   const handleAddCSR = () => {
-    if (newCsr.trim() !== "") {
-      addCsr(newCsr);
-      setNewCsr(""); // Clear the input field
+    if (newCsrName.trim() !== "") {
+      addCsr({ name: newCsrName, description: "" }); // Add a new CSR object
+      setNewCsrName(""); // Clear the input field
     }
   };
 
@@ -129,6 +132,17 @@ function AccountTable() {
     setShowArchivedOffCanvas(false);
   };
 
+  // Function to open the OffCanvas component
+  const handleOpenStatusOffCanvas = () => {
+    setShowStatusOffCanvas(true);
+    console.log("Open");
+  };
+
+  // Function to close the OffCanvas component
+  const handleCloseStatusOffCanvas = () => {
+    setShowStatusOffCanvas(false);
+  };
+
   return (
     <div>
       <div className="table-container">
@@ -190,9 +204,9 @@ function AccountTable() {
                     onChange={(e) => handleCSRChange(account.key, e)}
                   >
                     <option value="">Select CSR</option>
-                    {csrs.map((csr, idx) => (
-                      <option key={idx} value={csr}>
-                        {csr}
+                    {csrs.map((csr) => (
+                      <option key={csr.key} value={csr.name}>
+                        {csr.name}
                       </option>
                     ))}
                   </select>
@@ -217,7 +231,7 @@ function AccountTable() {
         </table>
       </div>
       <button
-        className="btn custom-btn-blue mx-2 mb-5"
+        className="btn custom-btn-blue mx-2 my-5"
         onClick={handleOpenArchivedOffCanvas}
       >
         Open Archived Cases
@@ -228,10 +242,20 @@ function AccountTable() {
         show={showArchivedOffCanvas}
         handleClose={handleCloseArchivedOffCanvas}
       />
+      <button
+        className="btn custom-btn-blue m-2"
+        onClick={handleOpenStatusOffCanvas}
+      >
+        Open Returns Souce Status
+      </button>
+      <ReturnStatusOffCanvas
+        show={showStatusOffCanvas}
+        handleClose={handleCloseStatusOffCanvas}
+      />
 
       <div className="row">
         <div className="col-md-6">
-          <AccountCount accounts={filteredAccounts} csrs={csrs} />
+          <AccountCount accounts={accounts} csrs={csrs} />
         </div>
         <div>
           <button
@@ -266,7 +290,7 @@ function AccountTable() {
               <input
                 type="text"
                 className="form-control"
-                value={newCsr}
+                value={newCsrName}
                 onChange={handleNewCSRChange}
                 placeholder="Enter New CSR"
               />
@@ -284,13 +308,13 @@ function AccountTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {csrs.map((csr, index) => (
-                    <tr key={index}>
-                      <td>{csr}</td>
+                  {csrs.map((csr) => (
+                    <tr key={csr.key}>
+                      <td>{csr.name}</td>
                       <td>
                         <button
                           className="btn btn-danger btn-sm"
-                          onClick={() => removeCsr(csr)}
+                          onClick={() => removeCsr(csr.key)}
                         >
                           Remove
                         </button>
@@ -304,21 +328,8 @@ function AccountTable() {
         </div>
 
         <div>
-          <input
-            type="text"
-            className="form-control"
-            value={newAccountNumber}
-            onChange={(e) => setNewAccountNumber(e.target.value)}
-            placeholder="Enter New Account Number"
-          />
           <button
             className="btn custom-btn-blue my-2"
-            onClick={handleAddAccount}
-          >
-            Add Account
-          </button>
-          <button
-            className="btn custom-btn-blue m-2"
             onClick={handleExportAccounts}
           >
             Export Accounts

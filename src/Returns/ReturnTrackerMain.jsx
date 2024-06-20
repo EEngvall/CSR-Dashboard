@@ -68,18 +68,7 @@ function ReturnTrackerMain() {
         setAccounts={() => {}}
         handleCompletionCheckBoxChange={handleCompletionCheckBoxChange}
       />
-      <div className="my-3 col-md-3">
-        <label htmlFor="formFileSm" className="form-label">
-          Import JSON Backup
-        </label>
-        <input
-          className="form-control form-control-sm mb-5"
-          id="formFileSm"
-          type="file"
-          accept=".json"
-          onChange={handleFileChange}
-        />
-      </div>
+      <div style={{ height: "150px" }}></div> {/* Adjust height as needed */}
     </div>
   );
 }

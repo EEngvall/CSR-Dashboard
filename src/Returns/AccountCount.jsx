@@ -16,8 +16,6 @@ function AccountCount({ accounts, csrs }) {
   let unassignedCompletedCount = 0; // Initialize count for completed unassigned accounts
   let unassignedIncompleteCount = 0; // Initialize count for incomplete unassigned accounts
 
-  let unassignedCount = 0; // Initialize count for unassigned accounts
-
   // Iterate through accounts and count how many are assigned to each CSR
   accounts.forEach((account) => {
     if (account.csr) {
@@ -40,9 +38,9 @@ function AccountCount({ accounts, csrs }) {
 
   // Transform the data for Recharts
   const data = csrs.map((csr) => ({
-    name: csr,
-    complete: completeAccountCount[csr] || 0,
-    incomplete: incompleteAccountCount[csr] || 0,
+    name: csr.name,
+    complete: completeAccountCount[csr.name] || 0,
+    incomplete: incompleteAccountCount[csr.name] || 0,
   }));
 
   // Include unassigned accounts in the data array
@@ -65,17 +63,17 @@ function AccountCount({ accounts, csrs }) {
           </thead>
           <tbody>
             {csrs.map((csr) => (
-              <tr key={csr}>
-                <td>{csr}</td>
-                <td>{completeAccountCount[csr] || 0}</td>
-                <td>{incompleteAccountCount[csr] || 0}</td>
+              <tr key={csr.key}>
+                <td>{csr.name}</td>
+                <td>{completeAccountCount[csr.name] || 0}</td>
+                <td>{incompleteAccountCount[csr.name] || 0}</td>
               </tr>
             ))}
 
             <tr>
               <td>Unassigned</td>
-              <td>0</td>
-              <td>{unassignedCount}</td>{" "}
+              <td>{unassignedCompletedCount}</td>
+              <td>{unassignedIncompleteCount}</td>
             </tr>
           </tbody>
         </table>

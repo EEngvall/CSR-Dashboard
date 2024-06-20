@@ -1,122 +1,140 @@
 import { useState, useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
 
 const useAccounts = (initialValue = []) => {
-  const [accounts, setAccounts] = useState(() => {
-    const storedAccounts = JSON.parse(localStorage.getItem("accounts"));
-    return storedAccounts || initialValue;
-  });
+  const [accounts, setAccounts] = useState(initialValue);
 
+  const API_BASE_URL = "https://returns-server.erikengvall.com";
 
   const fetchAccounts = async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const storedAccounts = JSON.parse(localStorage.getItem("accounts"));
-        resolve(storedAccounts || []);
-      }, 100);
-    });
-  };
-
-  const saveAccounts = async (newAccounts) => {
-    return new Promise((resolve, reject) => {
-      try {
-        localStorage.setItem("accounts", JSON.stringify(newAccounts));
-        setTimeout(() => resolve(), 100); // Simulate a slight delay
-      } catch (error) {
-        console.error("Failed to save accounts:", error);
-        reject(error);
-      }
-    });
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/accounts`);
+      setAccounts(response.data);
+    } catch (error) {
+      console.error("Failed to fetch accounts:", error);
+    }
   };
 
   const addAccount = async (accountNumber) => {
-    const updatedAccount = {
-      key: uuidv4(), // Generate UUID for the key
-      accountNumber: accountNumber,
-      archived: false, // Default archived status
-      status: "Incomplete",
-      csr: "",
-      createdAt: new Date().toLocaleString(),
-      completedAt: "Incomplete",
-    };
-    const newAccounts = [...accounts, updatedAccount];
-    await saveAccounts(newAccounts);
-    setAccounts(newAccounts);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/accounts`, {
+        accountNumber,
+        status: "Incomplete",
+        csr: "",
+        archived: false,
+        createdAt: new Date().toISOString(),
+        completedAt: "Incomplete",
+      });
+      setAccounts([...accounts, response.data]);
+    } catch (error) {
+      console.error("Failed to add account:", error);
+    }
   };
 
   const addMultipleAccounts = async (newAccountNumbers) => {
-    const updatedAccounts = newAccountNumbers.map((accountNumber) => ({
-      key: uuidv4(),
-      accountNumber,
-      archived: false,
-      status: "Incomplete",
-      csr: "",
-      createdAt: new Date().toLocaleString(),
-      completedAt: "Incomplete",
-    }));
-
-    const newAccounts = [...accounts, ...updatedAccounts];
-    await saveAccounts(newAccounts);
-    setAccounts(newAccounts);
+    try {
+      const updatedAccounts = await Promise.all(
+        newAccountNumbers.map((accountNumber) =>
+          axios.post(`${API_BASE_URL}/api/accounts`, {
+            accountNumber,
+            status: "Incomplete",
+            csr: "",
+            archived: false,
+            createdAt: new Date().toISOString(),
+            completedAt: "Incomplete",
+          }),
+        ),
+      );
+      setAccounts([
+        ...accounts,
+        ...updatedAccounts.map((response) => response.data),
+      ]);
+    } catch (error) {
+      console.error("Failed to add multiple accounts:", error);
+    }
   };
 
   const updateArchivedStatus = async (accountKey) => {
-    const updatedAccounts = [...accounts]; // Create a copy of the accounts array
-
-    // Find the index of the account with the specified key
-    const index = updatedAccounts.findIndex(
-      (account) => account.key === accountKey,
-    );
-
-    if (index !== -1) {
-      updatedAccounts[index] = {
-        ...updatedAccounts[index],
-        archived: !updatedAccounts[index]?.archived ?? true,
+    try {
+      const account = accounts.find((acc) => acc.key === accountKey);
+      if (!account) {
+        console.error("Account not found");
+        return;
+      }
+      const updatedAccount = {
+        ...account,
+        archived: !account.archived,
       };
-
-      await saveAccounts(updatedAccounts);
-      setAccounts(updatedAccounts);
+      const response = await axios.put(
+        `${API_BASE_URL}/api/accounts/${accountKey}`,
+        updatedAccount,
+      );
+      setAccounts(
+        accounts.map((acc) => (acc.key === accountKey ? response.data : acc)),
+      );
+    } catch (error) {
+      console.error("Failed to update archived status:", error);
     }
   };
 
   const updateAccountStatus = async (accountKey, status, completedAt) => {
-    const accountIndex = accounts.findIndex(
-      (account) => account.key === accountKey,
-    );
-    if (accountIndex === -1) {
-      console.error("Account not found");
-      return; 
+    try {
+      const account = accounts.find((acc) => acc.key === accountKey);
+      if (!account) {
+        console.error("Account not found");
+        return;
+      }
+      const updatedAccount = {
+        ...account,
+        status,
+        completedAt,
+      };
+      const response = await axios.put(
+        `${API_BASE_URL}/api/accounts/${accountKey}`,
+        updatedAccount,
+      );
+      setAccounts(
+        accounts.map((acc) => (acc.key === accountKey ? response.data : acc)),
+      );
+    } catch (error) {
+      console.error("Failed to update account status:", error);
     }
-
-    const newAccounts = [...accounts];
-    newAccounts[accountIndex] = {
-      ...newAccounts[accountIndex],
-      status,
-      completedAt,
-    };
-
-    await saveAccounts(newAccounts);
-    setAccounts(newAccounts);
   };
 
   const removeAccount = async (accountKey) => {
-    const newAccounts = accounts.filter(
-      (accounts) => accounts.key !== accountKey,
-    );
-    await saveAccounts(newAccounts);
-    setAccounts(newAccounts);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/accounts/${accountKey}`);
+      setAccounts(accounts.filter((acc) => acc.key !== accountKey));
+    } catch (error) {
+      console.error("Failed to remove account:", error);
+    }
   };
 
   const updateAccountCSR = async (accountKey, newCsr) => {
-    const updatedAccounts = accounts.map((account) =>
-      account.key === accountKey ? { ...account, csr: newCsr } : account,
-    );
-    await saveAccounts(updatedAccounts);
-    setAccounts(updatedAccounts);
+    try {
+      const account = accounts.find((acc) => acc.key === accountKey);
+      if (!account) {
+        console.error("Account not found");
+        return;
+      }
+      const updatedAccount = {
+        ...account,
+        csr: newCsr,
+      };
+      const response = await axios.put(
+        `${API_BASE_URL}/api/accounts/${accountKey}`,
+        updatedAccount,
+      );
+      setAccounts(
+        accounts.map((acc) => (acc.key === accountKey ? response.data : acc)),
+      );
+    } catch (error) {
+      console.error("Failed to update CSR:", error);
+    }
   };
 
   useEffect(() => {
-    fetchAccounts().then(setAccounts);
+    fetchAccounts();
   }, []);
 
   return {
@@ -127,7 +145,7 @@ const useAccounts = (initialValue = []) => {
     updateAccountCSR,
     addMultipleAccounts,
     updateArchivedStatus,
-    saveAccounts,
+    fetchAccounts,
   };
 };
 
