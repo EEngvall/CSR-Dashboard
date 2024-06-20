@@ -11,7 +11,12 @@ const ArchivedCasesOffCanvas = ({
   );
 
   return (
-    <Offcanvas show={show} onHide={handleClose} placement="end">
+    <Offcanvas
+      show={show}
+      onHide={handleClose}
+      placement="end"
+      style={{ width: "30%" }}
+    >
       <Offcanvas.Header closeButton>
         <Offcanvas.Title>Archived Cases</Offcanvas.Title>
       </Offcanvas.Header>
@@ -28,11 +33,11 @@ const ArchivedCasesOffCanvas = ({
           <tbody>
             {archivedCases.map((caseItem) => (
               <tr key={caseItem.id}>
-                <td>{caseItem.id}</td>
+                <td>{caseItem.key}</td>
                 <td>{caseItem.name || `Case #${caseItem.id}`}</td>
                 <td>{caseItem.status}</td>
                 <td>
-                  <Button onClick={() => handleReopenCase(caseItem.id)}>
+                  <Button onClick={() => handleReopenCase(caseItem.key)}>
                     Reopen
                   </Button>
                 </td>

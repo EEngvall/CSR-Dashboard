@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Offcanvas, Button, Table, Collapse } from "react-bootstrap";
 import useCases from "../hooks/useCases";
 import "./WorkOrderTracker.css";
@@ -6,8 +6,7 @@ import ArchivedCasesOffCanvas from "./ArchivedCasesOffCanvas";
 
 const WorkOrderTracker = () => {
   const { cases, addCase, updateCase, deleteCase } = useCases([]);
-  const [nextCaseId, setNextCaseId] = useState(2);
-  const [editingCaseId, setEditingCaseId] = useState(null);
+  const [editingCaseKey, setEditingCaseKey] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [historyCase, setHistoryCase] = useState(null);
   const [showNoteInput, setShowNoteInput] = useState(null);
@@ -15,18 +14,16 @@ const WorkOrderTracker = () => {
   const [openCases, setOpenCases] = useState([]);
   const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
   const [newCaseName, setNewCaseName] = useState(""); // State for new case name
+  const [localAddresses, setLocalAddresses] = useState({}); // Local state for addresses
 
-  const stages = [
-    "Email Received",
-    "Verified Meter Card(s)",
-    "Verified Inspection Tag(s)",
-    "Premise(s) Created",
-    "Service Point(s) Created",
-    "Case(s) Created",
-    "Inspection Tag(s) Saved",
-    "Meter Card(s) Saved",
-    "Engineer/Contractor Emailed",
-  ];
+  useEffect(() => {
+    // Initialize local addresses state based on the cases
+    const initialAddresses = cases.reduce((acc, caseItem) => {
+      acc[caseItem.key] = caseItem.addresses.map((address) => ({ ...address }));
+      return acc;
+    }, {});
+    setLocalAddresses(initialAddresses);
+  }, [cases]);
 
   const getCurrentTimestamp = () => {
     const now = new Date();
@@ -37,132 +34,74 @@ const WorkOrderTracker = () => {
     return `${time} ${date}`;
   };
 
-  const handleAddAddress = (caseId) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = {
-      ...caseToUpdate,
-      addresses: [
-        ...caseToUpdate.addresses,
-        {
-          caseId: "",
-          address: "",
-          stage: "Address Received",
-          history: [],
-        },
+  const handleAddAddress = (caseKey) => {
+    setLocalAddresses((prevAddresses) => ({
+      ...prevAddresses,
+      [caseKey]: [
+        ...(prevAddresses[caseKey] || []),
+        { caseId: "", address: "", history: [] },
       ],
-    };
-    updateCase(caseId, updatedCase);
+    }));
   };
 
-  const handleRemoveAddress = (caseId, addressIndex) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = {
-      ...caseToUpdate,
-      addresses: caseToUpdate.addresses.filter(
+  const handleRemoveAddress = (caseKey, addressIndex) => {
+    setLocalAddresses((prevAddresses) => ({
+      ...prevAddresses,
+      [caseKey]: prevAddresses[caseKey].filter(
         (_, index) => index !== addressIndex,
       ),
-    };
-    updateCase(caseId, updatedCase);
+    }));
   };
 
-  const handleAddressChange = (caseId, addressIndex, event) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = {
-      ...caseToUpdate,
-      addresses: caseToUpdate.addresses.map((address, index) =>
-        index === addressIndex
-          ? { ...address, address: event.target.value }
-          : address,
+  const handleInputChange = (caseKey, addressIndex, field, value) => {
+    setLocalAddresses((prevValues) => ({
+      ...prevValues,
+      [caseKey]: prevValues[caseKey].map((address, index) =>
+        index === addressIndex ? { ...address, [field]: value } : address,
       ),
-    };
-    updateCase(caseId, updatedCase);
+    }));
   };
 
-  const handleAddressStageChange = (caseId, addressIndex, event) => {
-    const timestamp = getCurrentTimestamp();
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = {
-      ...caseToUpdate,
-      addresses: caseToUpdate.addresses.map((address, index) =>
-        index === addressIndex
-          ? {
-              ...address,
-              stage: event.target.value,
-              history: [
-                ...address.history,
-                `${event.target.value} (${timestamp})`,
-              ],
-            }
-          : address,
-      ),
-    };
-    updateCase(caseId, updatedCase);
+  const handleSaveCase = async (caseKey) => {
+    try {
+      const updatedAddresses =
+        localAddresses[caseKey] ||
+        cases.find((c) => c.key === caseKey).addresses;
+      await updateCase(caseKey, { addresses: updatedAddresses });
+    } catch (error) {
+      console.error("Failed to save addresses:", error);
+    }
   };
 
-  const handleCaseStageChange = (caseId, direction) => {
-    const currentCase = cases.find((c) => c.id === caseId);
-    const currentIndex = stages.indexOf(currentCase.stage);
-    const currentStage = currentCase.stage;
-    const previousStage = currentIndex === 0 ? "" : stages[currentIndex - 1];
-    const newStage =
-      direction === "next" ? stages[currentIndex + 1] : previousStage;
-    const timestamp = getCurrentTimestamp();
-    const updatedCase = {
-      ...currentCase,
-      stage: newStage,
-      previousStage,
-      timestamp,
-      history: [
-        ...(currentCase.history || []),
-        `Moved from ${currentStage} to ${newStage} at ${timestamp}`,
-      ],
-    };
-    updateCase(caseId, updatedCase);
+  const handleEditCaseName = (caseKey) => {
+    setEditingCaseKey(caseKey);
+    setNewCaseName(cases.find((c) => c.key === caseKey)?.name || ""); // Set current case name in state
   };
 
-  const handleEditCaseName = (caseId) => {
-    setEditingCaseId(caseId);
-    setNewCaseName(cases.find((c) => c.id === caseId)?.name || ""); // Set current case name in state
-  };
-
-  const handleSaveCaseName = (caseId) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = { ...caseToUpdate, name: newCaseName };
-    updateCase(caseId, updatedCase);
-    setEditingCaseId(null);
+  const handleSaveCaseName = async (caseKey) => {
+    try {
+      await updateCase(caseKey, { name: newCaseName });
+      setEditingCaseKey(null);
+    } catch (error) {
+      console.error("Failed to update case name:", error);
+    }
   };
 
   const handleAddCase = () => {
     const timestamp = getCurrentTimestamp();
     const newCase = {
-      id: nextCaseId,
       name: "",
-      stage: "Email Received",
-      addresses: [{ address: "", stage: "Address Received", history: [] }],
+      addresses: [{ address: "", history: [] }],
       notes: [],
       timestamp,
-      history: [`Email Received (${timestamp})`],
+      history: [`Case Created (${timestamp})`],
       status: "Active",
     };
     addCase(newCase);
-    setNextCaseId(nextCaseId + 1);
   };
 
-  const handleCaseIdChange = (caseId, addressIndex, event) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = {
-      ...caseToUpdate,
-      addresses: caseToUpdate.addresses.map((address, index) =>
-        index === addressIndex
-          ? { ...address, caseId: event.target.value }
-          : address,
-      ),
-    };
-    updateCase(caseId, updatedCase);
-  };
-
-  const handleShowHistory = (caseId) => {
-    setHistoryCase(cases.find((c) => c.id === caseId));
+  const handleShowHistory = (caseKey) => {
+    setHistoryCase(cases.find((c) => c.key === caseKey));
     setShowHistory(true);
   };
 
@@ -170,14 +109,16 @@ const WorkOrderTracker = () => {
     setShowHistory(false);
   };
 
-  const handleCloseCase = (caseId) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = { ...caseToUpdate, status: "Archived" };
-    updateCase(caseId, updatedCase);
+  const handleCloseCase = (caseKey) => {
+    updateCase(caseKey, { status: "Archived" });
   };
 
-  const handleToggleNoteInput = (caseId) => {
-    setShowNoteInput((prevId) => (prevId === caseId ? null : caseId));
+  const handleReopenCase = (caseKey) => {
+    updateCase(caseKey, { status: "Active" });
+  };
+
+  const handleToggleNoteInput = (caseKey) => {
+    setShowNoteInput((prevKey) => (prevKey === caseKey ? null : caseKey));
     setCurrentNote("");
   };
 
@@ -185,16 +126,16 @@ const WorkOrderTracker = () => {
     setCurrentNote(event.target.value);
   };
 
-  const handleCopyAddresses = (caseId) => {
-    const currentCase = cases.find((item) => item.id === caseId);
+  const handleCopyAddresses = (caseKey) => {
+    const currentCase = cases.find((item) => item.key === caseKey);
     const addressesString = currentCase.addresses
       .map((address) => `${address.address}, Case ID: ${address.caseId}`)
       .join("\n");
     navigator.clipboard.writeText(addressesString);
   };
 
-  const handleCopyCustomerContact = (address, caseId) => {
-    const textToCopy = `Created Case ID: ${caseId} for device install at ${address}`;
+  const handleCopyCustomerContact = (address, caseKey) => {
+    const textToCopy = `Created Case ID: ${caseKey} for device install at ${address}`;
     navigator.clipboard
       .writeText(textToCopy)
       .then(() => console.log("Text copied to clipboard:", textToCopy))
@@ -203,31 +144,42 @@ const WorkOrderTracker = () => {
       );
   };
 
-  const handleAddNote = (caseId) => {
+  const handleAddNote = (caseKey) => {
     const timestamp = getCurrentTimestamp();
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = {
-      ...caseToUpdate,
-      notes: [...caseToUpdate.notes, `${currentNote} (${timestamp})`],
-    };
-    updateCase(caseId, updatedCase);
+    const caseToUpdate = cases.find((c) => c.key === caseKey);
+
+    if (!caseToUpdate) {
+      console.error(`Case with key ${caseKey} not found.`);
+      return;
+    }
+
+    const updatedNotes = [
+      ...caseToUpdate.notes,
+      `${currentNote} (${timestamp})`,
+    ];
+
+    // Update only the notes field
+    updateCase(caseKey, { notes: updatedNotes });
+
+    // Clear the note input state
     setShowNoteInput(null);
     setCurrentNote("");
   };
 
-  const handleRemoveNote = (caseId, noteIndex) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = {
-      ...caseToUpdate,
-      notes: caseToUpdate.notes.filter((_, index) => index !== noteIndex),
-    };
-    updateCase(caseId, updatedCase);
-  };
+  const handleRemoveNote = (caseKey, noteIndex) => {
+    const caseToUpdate = cases.find((c) => c.key === caseKey);
 
-  const handleReopenCase = (caseId) => {
-    const caseToUpdate = cases.find((c) => c.id === caseId);
-    const updatedCase = { ...caseToUpdate, status: "Active" };
-    updateCase(caseId, updatedCase);
+    if (!caseToUpdate) {
+      console.error(`Case with key ${caseKey} not found.`);
+      return;
+    }
+
+    const updatedNotes = caseToUpdate.notes.filter(
+      (_, index) => index !== noteIndex,
+    );
+
+    // Update only the notes field
+    updateCase(caseKey, { notes: updatedNotes });
   };
 
   const handleOpenArchivedOffCanvas = () => {
@@ -238,39 +190,12 @@ const WorkOrderTracker = () => {
     setShowArchivedOffCanvas(false);
   };
 
-  const handleExportData = () => {
-    const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
-    const data = JSON.stringify(cases, null, 2);
-    const fileName = `CSR_WORK_ORDER_CASES_${timestamp}.json`;
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportData = (event) => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const importedCases = JSON.parse(e.target.result);
-        setCases(importedCases);
-      } catch (error) {
-        console.error("Error importing data:", error);
-      }
-    };
-    reader.readAsText(file);
-  };
-
   // Function to toggle open/closed state of a case
-  const toggleCase = (caseId) => {
+  const toggleCase = (caseKey) => {
     setOpenCases((prevOpenCases) =>
-      prevOpenCases.includes(caseId)
-        ? prevOpenCases.filter((id) => id !== caseId)
-        : [...prevOpenCases, caseId],
+      prevOpenCases.includes(caseKey)
+        ? prevOpenCases.filter((key) => key !== caseKey)
+        : [...prevOpenCases, caseKey],
     );
   };
 
@@ -280,10 +205,10 @@ const WorkOrderTracker = () => {
       {cases
         .filter((item) => item.status === "Active")
         .map((item) => (
-          <div key={item.id} className="mb-4">
+          <div key={item.key} className="mb-4">
             <div
               className="case-header"
-              onClick={() => toggleCase(item.id)}
+              onClick={() => toggleCase(item.key)}
               style={{
                 border: "1px solid #005e7d",
                 borderRadius: "10px",
@@ -292,7 +217,7 @@ const WorkOrderTracker = () => {
               }}
             >
               <h4>
-                {editingCaseId === item.id ? (
+                {editingCaseKey === item.key ? (
                   <>
                     <input
                       type="text"
@@ -304,18 +229,18 @@ const WorkOrderTracker = () => {
                     <button
                       className="btn btn-success"
                       type="button"
-                      onClick={() => handleSaveCaseName(item.id)}
+                      onClick={() => handleSaveCaseName(item.key)}
                     >
                       Save
                     </button>
                   </>
                 ) : (
                   <>
-                    {item.name ? `Case: ${item.name}` : `Case # ${item.id}`}
+                    {item.name ? `Case: ${item.name}` : `Case ID ${item.key}`}
                     <button
                       className="btn btn-outline-secondary btn-sm ms-2"
                       type="button"
-                      onClick={() => handleEditCaseName(item.id)}
+                      onClick={() => handleEditCaseName(item.key)}
                     >
                       Edit
                     </button>
@@ -324,64 +249,48 @@ const WorkOrderTracker = () => {
               </h4>
             </div>
 
-            <Collapse in={openCases.includes(item.id)}>
+            <Collapse in={openCases.includes(item.key)}>
               <div>
                 <p>
-                  Case Stage: {item.stage} ({item.timestamp})
+                  Created: {item.timestamp}
                   <button
                     className="btn btn-link btn-sm"
-                    onClick={() => handleShowHistory(item.id)}
+                    onClick={() => handleShowHistory(item.key)}
                   >
                     History
                   </button>
                 </p>
-                <div>
-                  <button
-                    className="btn custom-btn-green btn-sm me-2 mb-2"
-                    onClick={() => handleCaseStageChange(item.id, "previous")}
-                    disabled={item.stage === stages[0]}
+                {localAddresses[item.key]?.map((address, index) => (
+                  <div
+                    key={`${item.key}-${index}`}
+                    className="input-group mb-3"
                   >
-                    Previous Stage
-                  </button>
-                  <button
-                    className="btn custom-btn-green btn-sm mb-2"
-                    onClick={() => handleCaseStageChange(item.id, "next")}
-                    disabled={item.stage === stages[stages.length - 1]}
-                  >
-                    Next Stage
-                  </button>
-                </div>
-                {item.addresses.map((address, index) => (
-                  <div key={`${item.id}-${index}`} className="input-group mb-3">
                     <input
                       type="text"
                       className="form-control"
                       placeholder="Enter street address"
                       value={address.address}
                       onChange={(event) =>
-                        handleAddressChange(item.id, index, event)
+                        handleInputChange(
+                          item.key,
+                          index,
+                          "address",
+                          event.target.value,
+                        )
                       }
                     />
-                    <select
-                      className="form-select"
-                      value={address.stage}
-                      onChange={(event) =>
-                        handleAddressStageChange(item.id, index, event)
-                      }
-                    >
-                      {stages.map((stage) => (
-                        <option key={stage} value={stage}>
-                          {stage}
-                        </option>
-                      ))}
-                    </select>
                     <input
                       type="text"
                       className="form-control"
                       placeholder="Enter Case ID"
                       value={address.caseId}
                       onChange={(event) =>
-                        handleCaseIdChange(item.id, index, event)
+                        handleInputChange(
+                          item.key,
+                          index,
+                          "caseId",
+                          event.target.value,
+                        )
                       }
                     />
                     <Button
@@ -398,7 +307,7 @@ const WorkOrderTracker = () => {
                     <button
                       className="btn btn-outline-danger"
                       type="button"
-                      onClick={() => handleRemoveAddress(item.id, index)}
+                      onClick={() => handleRemoveAddress(item.key, index)}
                     >
                       Remove
                     </button>
@@ -406,31 +315,40 @@ const WorkOrderTracker = () => {
                 ))}
 
                 <button
-                  className="btn btn-outline-secondary"
+                  className="btn custom-btn-green btn-sm ms-2"
                   type="button"
-                  onClick={() => handleAddAddress(item.id)}
+                  onClick={() => handleAddAddress(item.key)}
                 >
                   Add Address
                 </button>
-                <button
-                  className="btn btn-danger btn-sm ms-2"
-                  onClick={() => handleCloseCase(item.id)}
-                >
-                  Close Case
-                </button>
+
                 <button
                   className="btn custom-btn-blue btn-sm ms-2"
-                  onClick={() => handleCopyAddresses(item.id)}
+                  type="button"
+                  onClick={() => handleCopyAddresses(item.key)}
                 >
                   Copy Addresses/Cases
                 </button>
                 <button
                   className="btn custom-btn-blue btn-sm ms-2"
-                  onClick={() => handleToggleNoteInput(item.id)}
+                  onClick={() => handleToggleNoteInput(item.key)}
                 >
-                  {showNoteInput === item.id ? "Cancel" : "Add Note"}
+                  {showNoteInput === item.key ? "Cancel" : "Add Note"}
                 </button>
-                {showNoteInput === item.id && (
+                <button
+                  className="btn btn-danger btn-sm ms-2"
+                  onClick={() => handleCloseCase(item.key)}
+                >
+                  Close Case
+                </button>
+                <button
+                  className="btn custom-btn-green btn-sm ms-2"
+                  type="button"
+                  onClick={() => handleSaveCase(item.key)}
+                >
+                  Save Case
+                </button>
+                {showNoteInput === item.key && (
                   <div className="input-group mt-2">
                     <input
                       type="text"
@@ -441,7 +359,7 @@ const WorkOrderTracker = () => {
                     />
                     <button
                       className="btn btn-success"
-                      onClick={() => handleAddNote(item.id)}
+                      onClick={() => handleAddNote(item.key)}
                     >
                       Save
                     </button>
@@ -450,13 +368,13 @@ const WorkOrderTracker = () => {
                 <div className="mt-2">
                   {item.notes.map((note, index) => (
                     <div
-                      key={`${item.id}-note-${index}`}
+                      key={`${item.key}-note-${index}`}
                       className="d-flex align-items-center mb-2"
                     >
                       <div>{note}</div>
                       <button
                         className="btn btn-sm btn-close ms-2"
-                        onClick={() => handleRemoveNote(item.id, index)}
+                        onClick={() => handleRemoveNote(item.key, index)}
                       ></button>
                     </div>
                   ))}
@@ -465,42 +383,25 @@ const WorkOrderTracker = () => {
             </Collapse>
           </div>
         ))}
-      <button className="btn custom-btn-blue mb-5" onClick={handleAddCase}>
-        Add Case
-      </button>
-      <button
-        className="btn custom-btn-blue mx-2 mb-5"
-        onClick={handleOpenArchivedOffCanvas}
-      >
-        Open Archived Cases
-      </button>
+
+      <div className="text-center my-5">
+        <button className="btn custom-btn-green mb-5" onClick={handleAddCase}>
+          Add Case
+        </button>
+        <button
+          className="btn custom-btn-blue mx-2 mb-5"
+          onClick={handleOpenArchivedOffCanvas}
+        >
+          Open Archived Cases
+        </button>
+      </div>
+
       <ArchivedCasesOffCanvas
         cases={cases}
         handleReopenCase={handleReopenCase}
         show={showArchivedOffCanvas}
         handleClose={handleCloseArchivedOffCanvas}
       />
-      <div className="mb-3">
-        <div>
-          <button
-            className="btn custom-btn-blue mb-3"
-            onClick={handleExportData}
-          >
-            Export Data
-          </button>
-        </div>
-
-        <label htmlFor="fileInput" className="form-label">
-          Select JSON to Import:
-        </label>
-        <input
-          type="file"
-          accept=".json"
-          id="fileInput"
-          onChange={handleImportData}
-          className="form-control"
-        />
-      </div>
 
       <Offcanvas show={showHistory} onHide={handleCloseHistory}>
         <Offcanvas.Header closeButton>
@@ -519,14 +420,14 @@ const WorkOrderTracker = () => {
                 <tbody>
                   {historyCase.history &&
                     historyCase.history.map((event, index) => (
-                      <tr key={`${historyCase.id}-history-${index}`}>
+                      <tr key={`${historyCase.key}-history-${index}`}>
                         <td>{event}</td>
                       </tr>
                     ))}
                 </tbody>
               </Table>
               {historyCase.addresses.map((address, index) => (
-                <div key={`${historyCase.id}-address-history-${index}`}>
+                <div key={`${historyCase.key}-address-history-${index}`}>
                   <h5>{address.address} History:</h5>
                   <Table striped bordered hover>
                     <thead>
@@ -538,7 +439,7 @@ const WorkOrderTracker = () => {
                       {address.history &&
                         address.history.map((event, idx) => (
                           <tr
-                            key={`${historyCase.id}-address-${index}-history-${idx}`}
+                            key={`${historyCase.key}-address-${index}-history-${idx}`}
                           >
                             <td>{event}</td>
                           </tr>

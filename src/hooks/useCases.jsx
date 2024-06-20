@@ -23,25 +23,28 @@ const useCases = (initialValue = []) => {
     }
   };
 
-  const updateCase = async (id, updatedCase) => {
+  const updateCase = async (key, updatedFields) => {
     try {
-      const { id: _, ...caseWithoutId } = updatedCase; // Exclude id
-      const response = await axios.put(
-        `${API_BASE_URL}/api/cases/${id}`,
-        caseWithoutId,
+      const response = await axios.patch(
+        `${API_BASE_URL}/api/cases/${key}`,
+        updatedFields,
       );
-      setCases((prevCases) =>
-        prevCases.map((c) => (c.id === id ? response.data : c)),
-      );
+
+      setCases((prevCases) => {
+        const updatedCases = prevCases.map((c) =>
+          c.key === key ? { ...c, ...updatedFields, ...response.data } : c,
+        );
+        return updatedCases;
+      });
     } catch (error) {
       console.error("Failed to update case:", error);
     }
   };
 
-  const deleteCase = async (id) => {
+  const deleteCase = async (key) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/cases/${id}`);
-      setCases((prevCases) => prevCases.filter((c) => c.id !== id));
+      await axios.delete(`${API_BASE_URL}/api/cases/${key}`);
+      setCases((prevCases) => prevCases.filter((c) => c.key !== key));
     } catch (error) {
       console.error("Failed to delete case:", error);
     }
