@@ -5,13 +5,14 @@ import "../CustomColors.css";
 
 function FileUpload() {
   const [file, setFile] = useState();
-
   const [processedData, setProcessedData] = useState(() => {
     const storedProcessedData = JSON.parse(localStorage.getItem("fileData"));
-    return storedProcessedData;
+    return storedProcessedData || [];
   });
   const [source, setSource] = useState("PaymentUS");
   const [checkedRows, setCheckedRows] = useState({});
+  const [cashOnly, setCashOnly] = useState({});
+  const [abpRemoval, setAbpRemoval] = useState({});
   const { addMultipleAccounts } = useAccounts(); // Destructure the addAccount function from the hook
 
   const onOptionChange = (e) => {
@@ -34,8 +35,6 @@ function FileUpload() {
     reader.onload = () => {
       const fileData = reader.result;
 
-      // Inside handleFileUpload function
-
       // Parse CSV data
       Papa.parse(fileData, {
         header: true,
@@ -53,24 +52,19 @@ function FileUpload() {
 
     reader.readAsText(file);
   };
-  // Function to copy account numbers of checked rows to clipboard
-  const copyAccountNumbers = () => {
-    const accountNumbers = [];
-    Object.keys(checkedRows).forEach((key) => {
-      if (checkedRows[key]) {
-        const rowData = processedData.find((row) => row.key === key);
-        if (rowData) {
-          accountNumbers.push(rowData.accountNumber);
-        }
-      }
-    });
 
-    // Join account numbers
-    const accountNumbersText = accountNumbers.join("\n");
-
-    // Copy to clipboard
-    navigator.clipboard.writeText(accountNumbersText).then(() => {
-      console.log("Account numbers copied to clipboard:", accountNumbersText);
+  // Function to generate and copy text based on account data
+  const handleCopyText = (row) => {
+    let text = `Returned ${source === "PaymentUS" ? "PaymentUS" : "ACH"} Payment - ${row.paymentStatus} - Made via ${source === "PaymentUS" ? "DSS" : "IVR"}`;
+    if (cashOnly[row.key]) {
+      text +=
+        "\nCUSTOMER PLACED ON CASH ONLY STATUS DUE TO MULTIPLE RETURNED PAYMENTS";
+    }
+    if (abpRemoval[row.key]) {
+      text += "\nREMOVED FROM ABP DUE TO CASH ONLY STATUS";
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      console.log("Text copied to clipboard:", text);
     });
   };
 
@@ -105,7 +99,6 @@ function FileUpload() {
         key,
       };
     });
-    // console.log("Processed PayPoint data:", processedData); // Log processed PayPoint data
     setProcessedData(processedData);
     localStorage.setItem("fileData", JSON.stringify(processedData));
   };
@@ -136,7 +129,6 @@ function FileUpload() {
         key,
       };
     });
-    // console.log("Processed PaymentUS data:", processedData); // Log processed PaymentUS data
     setProcessedData(processedData);
     localStorage.setItem("fileData", JSON.stringify(processedData));
   };
@@ -145,6 +137,40 @@ function FileUpload() {
     setCheckedRows((prevState) => {
       const newState = { ...prevState, [key]: !prevState[key] };
       return newState;
+    });
+  };
+
+  const handleCashOnlyChange = (key) => {
+    setCashOnly((prevState) => ({
+      ...prevState,
+      [key]: !prevState[key],
+    }));
+  };
+
+  const handleAbpRemovalChange = (key) => {
+    setAbpRemoval((prevState) => ({
+      ...prevState,
+      [key]: !prevState[key],
+    }));
+  };
+
+  const copyAccountNumbers = () => {
+    const accountNumbers = [];
+    Object.keys(checkedRows).forEach((key) => {
+      if (checkedRows[key]) {
+        const rowData = processedData.find((row) => row.key === key);
+        if (rowData) {
+          accountNumbers.push(rowData.accountNumber);
+        }
+      }
+    });
+
+    // Join account numbers
+    const accountNumbersText = accountNumbers.join("\n");
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(accountNumbersText).then(() => {
+      console.log("Account numbers copied to clipboard:", accountNumbersText);
     });
   };
 
@@ -166,17 +192,14 @@ function FileUpload() {
     if (newAccountNumbers.length > 0) {
       await addMultipleAccounts(newAccountNumbers);
     }
-
     console.log("All accounts added");
-
-    // Update the processed data to only show remaining accounts
     setProcessedData(remainingAccounts);
-    // Reset checked rows since they are now transferred or no longer displayed
     setCheckedRows({});
 
     localStorage.setItem("fileData", JSON.stringify(remainingAccounts));
     console.log("Updated fileData in localStorage: ", remainingAccounts);
   };
+
   const clearData = () => {
     setProcessedData([]);
     localStorage.setItem("fileData", JSON.stringify([]));
@@ -200,6 +223,12 @@ function FileUpload() {
         />
         <button className="btn custom-btn-blue" onClick={handleFileUpload}>
           Upload
+        </button>
+        <button
+          className="btn custom-btn-blue mx-2"
+          onClick={copyAccountNumbers}
+        >
+          Copy Account Numbers
         </button>
         <button
           className="btn custom-btn-blue mx-2"
@@ -246,14 +275,19 @@ function FileUpload() {
             <thead>
               <tr>
                 <th>Completed Status</th>
-                <th>Confirmation Number</th>
-                <th>Payment Amount</th>
                 <th>Account Number</th>
+
+                <th>Payment Amount</th>
+                <th>Confirmation Number</th>
+
                 <th>Customer Name</th>
                 <th>Payment Date</th>
                 <th>Payment Type</th>
                 <th>Payment Method</th>
                 <th>Payment Status</th>
+                <th>Cash Only</th>
+                <th>ABP Removal</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -282,15 +316,37 @@ function FileUpload() {
                   <td>{row.paymentType}</td>
                   <td>{row.paymentMethod}</td>
                   <td>{row.paymentStatus}</td>
+                  <td>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      checked={!!cashOnly[row.key]} // Ensure conversion to boolean
+                      onChange={() => handleCashOnlyChange(row.key)}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      checked={!!abpRemoval[row.key]} // Ensure conversion to boolean
+                      onChange={() => handleAbpRemovalChange(row.key)}
+                    />
+                  </td>
+                  <td>
+                    <button
+                      className="btn custom-btn-blue btn-sm"
+                      onClick={() => handleCopyText(row)}
+                      style={{ padding: ".25rem .5rem", fontSize: ".75rem" }}
+                    >
+                      Customer Contact
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
-      <button className="mt-3 btn custom-btn-blue" onClick={copyAccountNumbers}>
-        Copy Account Numbers
-      </button>
     </div>
   );
 }
