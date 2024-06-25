@@ -55,7 +55,7 @@ function FileUpload() {
 
   // Function to generate and copy text based on account data
   const handleCopyText = (row) => {
-    let text = `Returned ${source === "PaymentUS" ? "PaymentUS" : "ACH"} Payment - ${row.paymentStatus} - Made via ${source === "PaymentUS" ? "DSS" : "IVR"}`;
+    let text = `Returned ${source === "PaymentUS" ? "PaymentUS" : "ACH"} Payment - ${row.paymentStatus} - Made via ${source === "PaymentUS" ? "DSS/Customer Portal" : "IVR"}`;
     if (cashOnly[row.key]) {
       text +=
         "\nCUSTOMER PLACED ON CASH ONLY STATUS DUE TO MULTIPLE RETURNED PAYMENTS";
@@ -304,9 +304,9 @@ function FileUpload() {
                       onChange={() => handleCheckboxChange(row.key)}
                     />
                   </td>
-                  <td>{row.confirmationNumber}</td>
-                  <td>{row.amount}</td>
                   <td>{row.accountNumber}</td>
+                  <td>{row.amount}</td>
+                  <td>{row.confirmationNumber}</td>
                   <td>{row.customerName}</td>
                   <td>
                     {row.paymentDate instanceof Date
