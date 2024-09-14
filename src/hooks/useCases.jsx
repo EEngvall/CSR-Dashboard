@@ -27,12 +27,12 @@ const useCases = (initialValue = []) => {
     try {
       const response = await axios.patch(
         `${API_BASE_URL}/api/cases/${key}`,
-        updatedFields,
+        updatedFields
       );
 
       setCases((prevCases) => {
         const updatedCases = prevCases.map((c) =>
-          c.key === key ? { ...c, ...updatedFields, ...response.data } : c,
+          c.key === key ? { ...c, ...updatedFields, ...response.data } : c
         );
         return updatedCases;
       });

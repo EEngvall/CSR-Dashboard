@@ -5,6 +5,7 @@ import ArchivedOffCanvasReturns from "./ArchivedOffCanvasReturns";
 import useAccounts from "../hooks/useAccounts";
 import useCsrs from "../hooks/useCsrs";
 import ReturnStatusOffCanvas from "./ReturnStatusOffCanvas";
+import { toast } from "react-toastify"; // Add this import if you're using react-toastify for notifications
 
 function AccountTable() {
   const {
@@ -76,7 +77,7 @@ function AccountTable() {
 
   // Filter out archived accounts
   const filteredAccounts = accounts.filter(
-    (account) => account.archived === false,
+    (account) => account.archived === false
   );
 
   const requestSort = (key) => {
@@ -97,13 +98,13 @@ function AccountTable() {
           ? a.status === "Completed" && b.status !== "Completed"
             ? -1
             : a.status !== "Completed" && b.status === "Completed"
-              ? 1
-              : 0
+            ? 1
+            : 0
           : a.status !== "Completed" && b.status === "Completed"
-            ? -1
-            : a.status === "Completed" && b.status !== "Completed"
-              ? 1
-              : 0;
+          ? -1
+          : a.status === "Completed" && b.status !== "Completed"
+          ? 1
+          : 0;
       } else if (key === "csr") {
         // Alphabetical sorting for CSR
         return sortConfig.direction === "ascending"
@@ -141,6 +142,25 @@ function AccountTable() {
   // Function to close the OffCanvas component
   const handleCloseStatusOffCanvas = () => {
     setShowStatusOffCanvas(false);
+  };
+
+  const handleCopyAccountNumber = (accountNumber) => {
+    navigator.clipboard
+      .writeText(accountNumber)
+      .then(() => {
+        toast.success(`Account number ${accountNumber} copied to clipboard!`, {
+          position: "top-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      })
+      .catch((err) => {
+        console.error("Failed to copy account number: ", err);
+        toast.error("Failed to copy account number");
+      });
   };
 
   return (
@@ -195,7 +215,19 @@ function AccountTable() {
                     }
                   />
                 </td>
-                <td>{account.accountNumber}</td>
+                <td>
+                  <span
+                    className="account-number-link"
+                    onClick={() =>
+                      handleCopyAccountNumber(account.accountNumber)
+                    }
+                    style={{
+                      cursor: "pointer",
+                    }}
+                  >
+                    {account.accountNumber}
+                  </span>
+                </td>
                 <td>{account.status}</td>
                 <td>
                   <select

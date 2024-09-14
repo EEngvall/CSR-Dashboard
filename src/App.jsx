@@ -9,6 +9,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import WorkOrderTracker from "./WorkOrders/WorkOrderTracker";
 import ReturnTrackerMain from "./Returns/ReturnTrackerMain";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
   return (
@@ -25,6 +27,7 @@ const App = () => {
             <Route path="/workOrders" element={<WorkOrderTracker />} />
             <Route path="/returnstracker" element={<ReturnTrackerMain />} />
           </Routes>
+          <ToastContainer />
         </div>
       </div>
     </Router>

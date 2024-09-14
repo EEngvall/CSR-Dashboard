@@ -28,3 +28,11 @@
   background-color: rgba(172, 208, 56, 0.5); /* Reduced opacity for hover */
   border-color: #acd038; /* Border color on hover */
 }
+
+.account-number-link {
+  cursor: pointer;
+}
+
+.account-number-link:hover {
+  text-decoration: none;
+}
