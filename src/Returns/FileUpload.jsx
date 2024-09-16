@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import useAccounts from "../hooks/useAccounts";
 import Papa from "papaparse";
 import "../CustomColors.css";
+import { toast } from "react-toastify";
 
 function FileUpload() {
   const [file, setFile] = useState();
@@ -55,13 +56,17 @@ function FileUpload() {
 
   // Function to generate and copy text based on account data
   const handleCopyText = (row) => {
-    let text = `Returned ${source === "PaymentUS" ? "PaymentUS" : "ACH"} Payment - ${row.paymentStatus} - Made via ${source === "PaymentUS" ? "DSS/Customer Portal" : "IVR"}`;
+    let text = `Returned ${
+      source === "PaymentUS" ? "PaymentUS" : "ACH"
+    } Payment - ${row.paymentStatus} - Made via ${
+      source === "PaymentUS" ? "DSS/Agent Dashboard" : "IVR"
+    }`;
     if (cashOnly[row.key]) {
       text +=
         "\nCUSTOMER PLACED ON CASH ONLY STATUS DUE TO MULTIPLE RETURNED PAYMENTS";
     }
     if (abpRemoval[row.key]) {
-      text += "\nREMOVED FROM ABP DUE TO CASH ONLY STATUS";
+      text += "\nCUSTOMER REMOVED FROM ABP";
     }
     navigator.clipboard.writeText(text).then(() => {
       console.log("Text copied to clipboard:", text);
@@ -73,12 +78,12 @@ function FileUpload() {
     const processedData = data.map((row) => {
       const confirmationNumber = row["Confirmation #"].substring(
         2,
-        row["Confirmation #"].length - 1,
+        row["Confirmation #"].length - 1
       );
       const amount = row["Payment Amount"];
       const accountNumber = row["Reference"].substring(
         2,
-        row["Reference"].length - 2,
+        row["Reference"].length - 2
       );
       const customerName = row["First Name"] + " " + row["Last Name"];
       const paymentDate = new Date(row["Payment Timestamp"]);
@@ -205,6 +210,20 @@ function FileUpload() {
     localStorage.setItem("fileData", JSON.stringify([]));
   };
 
+  const copyAccountNumber = (accountNumber) => {
+    navigator.clipboard.writeText(accountNumber).then(() => {
+      toast.success("Account number copied to clipboard!", {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    });
+  };
+
   useEffect(() => {
     const storedData = JSON.parse(localStorage.getItem("fileData"));
     if (storedData) {
@@ -304,7 +323,14 @@ function FileUpload() {
                       onChange={() => handleCheckboxChange(row.key)}
                     />
                   </td>
-                  <td>{row.accountNumber}</td>
+                  <td>
+                    <span
+                      onClick={() => copyAccountNumber(row.accountNumber)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {row.accountNumber}
+                    </span>
+                  </td>
                   <td>{row.amount}</td>
                   <td>{row.confirmationNumber}</td>
                   <td>{row.customerName}</td>
