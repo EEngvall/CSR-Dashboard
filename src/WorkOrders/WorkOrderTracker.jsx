@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Offcanvas, Button, Table, Collapse } from "react-bootstrap";
-import useCases from "../hooks/useCases";
-import "./WorkOrderTracker.css";
-import ArchivedCasesOffCanvas from "./ArchivedCasesOffCanvas";
+import React, { useState, useEffect } from 'react';
+import { Offcanvas, Button, Table, Collapse } from 'react-bootstrap';
+import useCases from '../hooks/useCases';
+import './WorkOrderTracker.css';
+import ArchivedCasesOffCanvas from './ArchivedCasesOffCanvas';
+import SPTypeForm from './SPTypeForm';
 
 const WorkOrderTracker = () => {
   const { cases, addCase, updateCase, deleteCase } = useCases([]);
@@ -10,10 +11,13 @@ const WorkOrderTracker = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [historyCase, setHistoryCase] = useState(null);
   const [showNoteInput, setShowNoteInput] = useState(null);
-  const [currentNote, setCurrentNote] = useState("");
+  const [currentNote, setCurrentNote] = useState('');
   const [openCases, setOpenCases] = useState([]);
   const [showArchivedOffCanvas, setShowArchivedOffCanvas] = useState(false);
-  const [newCaseName, setNewCaseName] = useState(""); // State for new case name
+  const [showSPGeneratorOffCanvas, setShowSPGeneratorOffCanvas] =
+    useState(false);
+
+  const [newCaseName, setNewCaseName] = useState(''); // State for new case name
   const [localAddresses, setLocalAddresses] = useState({}); // Local state for addresses
 
   useEffect(() => {
@@ -28,8 +32,8 @@ const WorkOrderTracker = () => {
   const getCurrentTimestamp = () => {
     const now = new Date();
     const hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-    const time = `${hours % 12 || 12}:${minutes}${hours >= 12 ? "PM" : "AM"}`;
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const time = `${hours % 12 || 12}:${minutes}${hours >= 12 ? 'PM' : 'AM'}`;
     const date = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
     return `${time} ${date}`;
   };
@@ -39,7 +43,7 @@ const WorkOrderTracker = () => {
       ...prevAddresses,
       [caseKey]: [
         ...(prevAddresses[caseKey] || []),
-        { caseId: "", address: "", history: [] },
+        { caseId: '', address: '', history: [], caseType: 'Install' },
       ],
     }));
   };
@@ -48,7 +52,7 @@ const WorkOrderTracker = () => {
     setLocalAddresses((prevAddresses) => ({
       ...prevAddresses,
       [caseKey]: prevAddresses[caseKey].filter(
-        (_, index) => index !== addressIndex,
+        (_, index) => index !== addressIndex
       ),
     }));
   };
@@ -57,7 +61,7 @@ const WorkOrderTracker = () => {
     setLocalAddresses((prevValues) => ({
       ...prevValues,
       [caseKey]: prevValues[caseKey].map((address, index) =>
-        index === addressIndex ? { ...address, [field]: value } : address,
+        index === addressIndex ? { ...address, [field]: value } : address
       ),
     }));
   };
@@ -69,13 +73,13 @@ const WorkOrderTracker = () => {
         cases.find((c) => c.key === caseKey).addresses;
       await updateCase(caseKey, { addresses: updatedAddresses });
     } catch (error) {
-      console.error("Failed to save addresses:", error);
+      console.error('Failed to save addresses:', error);
     }
   };
 
   const handleEditCaseName = (caseKey) => {
     setEditingCaseKey(caseKey);
-    setNewCaseName(cases.find((c) => c.key === caseKey)?.name || ""); // Set current case name in state
+    setNewCaseName(cases.find((c) => c.key === caseKey)?.name || ''); // Set current case name in state
   };
 
   const handleSaveCaseName = async (caseKey) => {
@@ -83,19 +87,19 @@ const WorkOrderTracker = () => {
       await updateCase(caseKey, { name: newCaseName });
       setEditingCaseKey(null);
     } catch (error) {
-      console.error("Failed to update case name:", error);
+      console.error('Failed to update case name:', error);
     }
   };
 
   const handleAddCase = () => {
     const timestamp = getCurrentTimestamp();
     const newCase = {
-      name: "",
-      addresses: [{ address: "", history: [] }],
+      name: '',
+      addresses: [{ address: '', history: [] }],
       notes: [],
       timestamp,
       history: [`Case Created (${timestamp})`],
-      status: "Active",
+      status: 'Active',
     };
     addCase(newCase);
   };
@@ -110,16 +114,16 @@ const WorkOrderTracker = () => {
   };
 
   const handleCloseCase = (caseKey) => {
-    updateCase(caseKey, { status: "Archived" });
+    updateCase(caseKey, { status: 'Archived' });
   };
 
   const handleReopenCase = (caseKey) => {
-    updateCase(caseKey, { status: "Active" });
+    updateCase(caseKey, { status: 'Active' });
   };
 
   const handleToggleNoteInput = (caseKey) => {
     setShowNoteInput((prevKey) => (prevKey === caseKey ? null : caseKey));
-    setCurrentNote("");
+    setCurrentNote('');
   };
 
   const handleNoteChange = (event) => {
@@ -129,18 +133,21 @@ const WorkOrderTracker = () => {
   const handleCopyAddresses = (caseKey) => {
     const currentCase = cases.find((item) => item.key === caseKey);
     const addressesString = currentCase.addresses
-      .map((address) => `${address.address}, Case ID: ${address.caseId}`)
-      .join("\n");
+      .map(
+        (address) =>
+          `${address.address} (${address.caseType}), Case ID: ${address.caseId}`
+      )
+      .join('\n');
     navigator.clipboard.writeText(addressesString);
   };
 
-  const handleCopyCustomerContact = (address, caseKey) => {
-    const textToCopy = `Created Case ID: ${caseKey} for device install at ${address}`;
+  const handleCopyCustomerContact = (address, caseKey, caseType) => {
+    const textToCopy = `Created Case ID: ${caseKey} for device ${caseType} at ${address}`;
     navigator.clipboard
       .writeText(textToCopy)
-      .then(() => console.log("Text copied to clipboard:", textToCopy))
+      .then(() => console.log('Text copied to clipboard:', textToCopy))
       .catch((error) =>
-        console.error("Error copying text to clipboard:", error),
+        console.error('Error copying text to clipboard:', error)
       );
   };
 
@@ -163,7 +170,7 @@ const WorkOrderTracker = () => {
 
     // Clear the note input state
     setShowNoteInput(null);
-    setCurrentNote("");
+    setCurrentNote('');
   };
 
   const handleRemoveNote = (caseKey, noteIndex) => {
@@ -175,7 +182,7 @@ const WorkOrderTracker = () => {
     }
 
     const updatedNotes = caseToUpdate.notes.filter(
-      (_, index) => index !== noteIndex,
+      (_, index) => index !== noteIndex
     );
 
     // Update only the notes field
@@ -190,12 +197,20 @@ const WorkOrderTracker = () => {
     setShowArchivedOffCanvas(false);
   };
 
+  const handleOpenSPGeneratorOffCanvas = () => {
+    setShowSPGeneratorOffCanvas(true);
+  };
+
+  const handleCloseSPGeneratorOffCanvas = () => {
+    setShowSPGeneratorOffCanvas(false);
+  };
+
   // Function to toggle open/closed state of a case
   const toggleCase = (caseKey) => {
     setOpenCases((prevOpenCases) =>
       prevOpenCases.includes(caseKey)
         ? prevOpenCases.filter((key) => key !== caseKey)
-        : [...prevOpenCases, caseKey],
+        : [...prevOpenCases, caseKey]
     );
   };
 
@@ -203,17 +218,17 @@ const WorkOrderTracker = () => {
     <div className="container mt-4">
       <h2 className="text-center">Work Order Tracker</h2>
       {cases
-        .filter((item) => item.status === "Active")
+        .filter((item) => item.status === 'Active')
         .map((item) => (
           <div key={item.key} className="mb-4">
             <div
               className="case-header"
               onClick={() => toggleCase(item.key)}
               style={{
-                border: "1px solid #005e7d",
-                borderRadius: "10px",
-                padding: "5px",
-                cursor: "pointer",
+                border: '1px solid #005e7d',
+                borderRadius: '10px',
+                padding: '5px',
+                cursor: 'pointer',
               }}
             >
               <h4>
@@ -274,8 +289,8 @@ const WorkOrderTracker = () => {
                         handleInputChange(
                           item.key,
                           index,
-                          "address",
-                          event.target.value,
+                          'address',
+                          event.target.value
                         )
                       }
                     />
@@ -288,17 +303,34 @@ const WorkOrderTracker = () => {
                         handleInputChange(
                           item.key,
                           index,
-                          "caseId",
-                          event.target.value,
+                          'caseId',
+                          event.target.value
                         )
                       }
                     />
+                    <select
+                      class="form-select"
+                      value={address.caseType || 'Select Case Type'}
+                      onChange={(event) =>
+                        handleInputChange(
+                          item.key,
+                          index,
+                          'caseType',
+                          event.target.value
+                        )
+                      }
+                    >
+                      <option>Select Case Type </option>
+                      <option value="Install">Install</option>
+                      <option value="Removal">Removal</option>
+                    </select>
                     <Button
                       variant="secondary"
                       onClick={() =>
                         handleCopyCustomerContact(
                           address.address,
                           address.caseId,
+                          address.caseType
                         )
                       }
                     >
@@ -333,7 +365,7 @@ const WorkOrderTracker = () => {
                   className="btn custom-btn-blue btn-sm ms-2"
                   onClick={() => handleToggleNoteInput(item.key)}
                 >
-                  {showNoteInput === item.key ? "Cancel" : "Add Note"}
+                  {showNoteInput === item.key ? 'Cancel' : 'Add Note'}
                 </button>
                 <button
                   className="btn btn-danger btn-sm ms-2"
@@ -385,8 +417,17 @@ const WorkOrderTracker = () => {
         ))}
 
       <div className="text-center my-5">
-        <button className="btn custom-btn-green mb-5" onClick={handleAddCase}>
+        <button
+          className="btn custom-btn-green me-2 mb-5"
+          onClick={handleAddCase}
+        >
           Add Case
+        </button>
+        <button
+          className="btn custom-btn-blue mx-2 mb-5"
+          onClick={handleOpenSPGeneratorOffCanvas}
+        >
+          SP Generator
         </button>
         <button
           className="btn custom-btn-blue mx-2 mb-5"
@@ -401,6 +442,11 @@ const WorkOrderTracker = () => {
         handleReopenCase={handleReopenCase}
         show={showArchivedOffCanvas}
         handleClose={handleCloseArchivedOffCanvas}
+      />
+
+      <SPTypeForm
+        show={showSPGeneratorOffCanvas}
+        handleClose={handleCloseSPGeneratorOffCanvas}
       />
 
       <Offcanvas show={showHistory} onHide={handleCloseHistory}>
@@ -452,6 +498,7 @@ const WorkOrderTracker = () => {
           )}
         </Offcanvas.Body>
       </Offcanvas>
+      <SPTypeForm />
     </div>
   );
 };

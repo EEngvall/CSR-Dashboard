@@ -1,17 +1,48 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const useAccounts = (initialValue = []) => {
   const [accounts, setAccounts] = useState(initialValue);
 
-  const API_BASE_URL = "https://returns-server.erikengvall.com";
+  const API_BASE_URL = 'https://returns-server.erikengvall.com';
+
+  const sendMessage = async (recipient, user, action) => {
+    try {
+      // Make the API call
+      const response = await fetch(
+        'https://returns-server.erikengvall.com/api/message/send',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            recipient: recipient,
+            contentVariables: {
+              1: user,
+              2: action,
+            },
+          }),
+        }
+      );
+      // Check if the request was successful
+      const result = await response.json();
+      if (response.ok) {
+        console.log('Message sent successfully!');
+      } else {
+        console.log(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
 
   const fetchAccounts = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/accounts`);
       setAccounts(response.data);
     } catch (error) {
-      console.error("Failed to fetch accounts:", error);
+      console.error('Failed to fetch accounts:', error);
     }
   };
 
@@ -19,15 +50,16 @@ const useAccounts = (initialValue = []) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/accounts`, {
         accountNumber,
-        status: "Incomplete",
-        csr: "",
+        status: 'Incomplete',
+        csr: '',
         archived: false,
         createdAt: new Date().toISOString(),
-        completedAt: "Incomplete",
+        completedAt: 'Incomplete',
       });
       setAccounts([...accounts, response.data]);
+      //sendMessage('+12094177238', 'EEngvall', 'Added account ' + accountNumber);
     } catch (error) {
-      console.error("Failed to add account:", error);
+      console.error('Failed to add account:', error);
     }
   };
 
@@ -37,20 +69,20 @@ const useAccounts = (initialValue = []) => {
         newAccountNumbers.map((accountNumber) =>
           axios.post(`${API_BASE_URL}/api/accounts`, {
             accountNumber,
-            status: "Incomplete",
-            csr: "",
+            status: 'Incomplete',
+            csr: '',
             archived: false,
             createdAt: new Date().toISOString(),
-            completedAt: "Incomplete",
-          }),
-        ),
+            completedAt: 'Incomplete',
+          })
+        )
       );
       setAccounts([
         ...accounts,
         ...updatedAccounts.map((response) => response.data),
       ]);
     } catch (error) {
-      console.error("Failed to add multiple accounts:", error);
+      console.error('Failed to add multiple accounts:', error);
     }
   };
 
@@ -58,7 +90,7 @@ const useAccounts = (initialValue = []) => {
     try {
       const account = accounts.find((acc) => acc.key === accountKey);
       if (!account) {
-        console.error("Account not found");
+        console.error('Account not found');
         return;
       }
       const updatedAccount = {
@@ -67,13 +99,13 @@ const useAccounts = (initialValue = []) => {
       };
       const response = await axios.put(
         `${API_BASE_URL}/api/accounts/${accountKey}`,
-        updatedAccount,
+        updatedAccount
       );
       setAccounts(
-        accounts.map((acc) => (acc.key === accountKey ? response.data : acc)),
+        accounts.map((acc) => (acc.key === accountKey ? response.data : acc))
       );
     } catch (error) {
-      console.error("Failed to update archived status:", error);
+      console.error('Failed to update archived status:', error);
     }
   };
 
@@ -81,7 +113,7 @@ const useAccounts = (initialValue = []) => {
     try {
       const account = accounts.find((acc) => acc.key === accountKey);
       if (!account) {
-        console.error("Account not found");
+        console.error('Account not found');
         return;
       }
       const updatedAccount = {
@@ -91,13 +123,13 @@ const useAccounts = (initialValue = []) => {
       };
       const response = await axios.put(
         `${API_BASE_URL}/api/accounts/${accountKey}`,
-        updatedAccount,
+        updatedAccount
       );
       setAccounts(
-        accounts.map((acc) => (acc.key === accountKey ? response.data : acc)),
+        accounts.map((acc) => (acc.key === accountKey ? response.data : acc))
       );
     } catch (error) {
-      console.error("Failed to update account status:", error);
+      console.error('Failed to update account status:', error);
     }
   };
 
@@ -106,7 +138,7 @@ const useAccounts = (initialValue = []) => {
       await axios.delete(`${API_BASE_URL}/api/accounts/${accountKey}`);
       setAccounts(accounts.filter((acc) => acc.key !== accountKey));
     } catch (error) {
-      console.error("Failed to remove account:", error);
+      console.error('Failed to remove account:', error);
     }
   };
 
@@ -114,7 +146,7 @@ const useAccounts = (initialValue = []) => {
     try {
       const account = accounts.find((acc) => acc.key === accountKey);
       if (!account) {
-        console.error("Account not found");
+        console.error('Account not found');
         return;
       }
       const updatedAccount = {
@@ -123,13 +155,13 @@ const useAccounts = (initialValue = []) => {
       };
       const response = await axios.put(
         `${API_BASE_URL}/api/accounts/${accountKey}`,
-        updatedAccount,
+        updatedAccount
       );
       setAccounts(
-        accounts.map((acc) => (acc.key === accountKey ? response.data : acc)),
+        accounts.map((acc) => (acc.key === accountKey ? response.data : acc))
       );
     } catch (error) {
-      console.error("Failed to update CSR:", error);
+      console.error('Failed to update CSR:', error);
     }
   };
 

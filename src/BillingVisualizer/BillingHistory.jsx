@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import Papa from "papaparse";
-import MonthlyAverageChart from "./MonthlyAverageChart";
-import "../CustomColors.css";
+import React, { useState } from 'react';
+import Papa from 'papaparse';
+import MonthlyAverageChart from './MonthlyAverageChart';
+import '../CustomColors.css';
 
 const BillingHistory = () => {
   const [overallAverage, setOverallAverage] = useState(0);
@@ -13,18 +13,18 @@ const BillingHistory = () => {
   const [expandedMonth, setExpandedMonth] = useState(null);
 
   const monthNames = {
-    1: "January",
-    2: "February",
-    3: "March",
-    4: "April",
-    5: "May",
-    6: "June",
-    7: "July",
-    8: "August",
-    9: "September",
-    10: "October",
-    11: "November",
-    12: "December",
+    1: 'January',
+    2: 'February',
+    3: 'March',
+    4: 'April',
+    5: 'May',
+    6: 'June',
+    7: 'July',
+    8: 'August',
+    9: 'September',
+    10: 'October',
+    11: 'November',
+    12: 'December',
   };
 
   const handleFileUpload = (e) => {
@@ -43,17 +43,17 @@ const BillingHistory = () => {
       const fileContent = event.target.result;
 
       // Split the file content by lines
-      const lines = fileContent.split("\n");
+      const lines = fileContent.split('\n');
 
       // Remove the first two lines
       let remainingLines = lines.slice(2);
 
       // Filter out additional lines to omit based on user input
       remainingLines = remainingLines.filter(
-        (line, index) => index === 0 || index > rowsToOmit,
+        (line, index) => index === 0 || index > rowsToOmit
       );
 
-      let omittedContent = remainingLines.join("\n");
+      let omittedContent = remainingLines.join('\n');
 
       Papa.parse(omittedContent, {
         skipEmptyLines: true,
@@ -76,12 +76,12 @@ const BillingHistory = () => {
     const monthlyAveragesByYear = {};
 
     data.forEach((row) => {
-      const date = new Date(row["Bill Segment End Date"]);
+      const date = new Date(row['Bill Segment End Date']);
       const month = date.getMonth() + 1;
       const year = date.getFullYear();
       const key = `${month}`;
 
-      const amount = parseFloat(row["kWh Consumption Per Day"]);
+      const amount = parseFloat(row['kWh Consumption Per Day']);
 
       if (!isNaN(amount)) {
         // Monthly averages calculation
@@ -152,9 +152,9 @@ const BillingHistory = () => {
     setExpandedMonth(null);
 
     // Clear the file input value
-    const fileInput = document.getElementById("fileInput");
+    const fileInput = document.getElementById('fileInput');
     if (fileInput) {
-      fileInput.value = "";
+      fileInput.value = '';
     }
   };
 
@@ -194,10 +194,10 @@ const BillingHistory = () => {
           {fileUploaded && (
             <>
               <div>
-                <h4>Overall Average: {overallAverage.toFixed(2)} kWh</h4>
+                <h4>Overall Daily Average: {overallAverage.toFixed(2)} kWh</h4>
               </div>
               <div>
-                <h4>Monthly Averages:</h4>
+                <h4>Monthly Daily Averages:</h4>
                 <small>(Based on Bill Segment End Date)</small>
                 <ul className="list-group">
                   {Object.keys(monthlyAverages).map((month) => (
@@ -206,20 +206,20 @@ const BillingHistory = () => {
                       className="list-group-item list-group-item-action"
                       onClick={() => handleExpandMonth(month)}
                     >
-                      {monthNames[month]} Average:{" "}
+                      {monthNames[month]} Average:{' '}
                       {monthlyAverages[month].average.toFixed(2)} kWh
                       {expandedMonth === month && (
                         <div>
                           {Object.keys(monthlyAveragesByYear[month]).map(
                             (year) => (
                               <div key={year}>
-                                {year} Average:{" "}
+                                {year} Average:{' '}
                                 {monthlyAveragesByYear[month][
                                   year
-                                ].average.toFixed(2)}{" "}
+                                ].average.toFixed(2)}{' '}
                                 kWh
                               </div>
-                            ),
+                            )
                           )}
                         </div>
                       )}

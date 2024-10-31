@@ -1,8 +1,21 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import "./Navbar.css";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import './Navbar.css';
+import { auth } from './Authentication/firebase';
+import SignOut from './Authentication/SignOut';
+import SignIn from './Authentication/SignIn';
 
 const Navbar = () => {
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const [user, setUser] = useState(null);
+
   return (
     <nav className="navbar navbar-expand-lg custom-nav-blue">
       <div className="container custom-nav-blue">
@@ -20,40 +33,60 @@ const Navbar = () => {
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse " id="navbarNav">
-          <ul className="navbar-nav">
-            <li className="nav-item ">
-              <Link className="nav-link custom-nav-blue " to="/">
-                Home
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link custom-nav-blue" to="/billingHistory">
-                Billing History
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link custom-nav-blue" to="/returns">
-                Returns File Upload
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link custom-nav-blue" to="/returnsTracker">
-                Return Call List
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link custom-nav-blue" to="/tasks">
-                Tasks
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link custom-nav-blue" to="/workOrders">
-                Work Orders
-              </Link>
-            </li>
-          </ul>
-        </div>
+        {user ? (
+          <div className="collapse navbar-collapse " id="navbarNav">
+            <ul className="navbar-nav me-auto">
+              <li className="nav-item ">
+                <Link className="nav-link custom-nav-blue " to="/">
+                  Home
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link custom-nav-blue" to="/billingHistory">
+                  Billing History
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link custom-nav-blue" to="/returns">
+                  Returns File Upload
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link custom-nav-blue" to="/returnsTracker">
+                  Return Call List
+                </Link>
+              </li>
+              {/*<li className="nav-item">
+                <Link className="nav-link custom-nav-blue" to="/tasks">
+                  Tasks
+                </Link>
+              </li>*/}
+              <li className="nav-item">
+                <Link className="nav-link custom-nav-blue" to="/workOrders">
+                  Work Orders
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link custom-nav-blue" to="/VEE">
+                  VEE
+                </Link>
+              </li>
+              {/*<li className="nav-item">
+                <Link className="nav-link custom-nav-blue" to="/Email">
+                  Email Parser
+                </Link>
+              </li>
+              */}
+            </ul>
+            <ul class="navbar-nav ml-auto">
+              <li className="nav-item">
+                <SignOut />
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <div></div>
+        )}
       </div>
     </nav>
   );

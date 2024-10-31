@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from "react";
-import useAccounts from "../hooks/useAccounts";
-import Papa from "papaparse";
-import "../CustomColors.css";
-import { toast } from "react-toastify";
+import React, { useState, useEffect } from 'react';
+import useAccounts from '../hooks/useAccounts';
+import Papa from 'papaparse';
+import '../CustomColors.css';
+import { toast } from 'react-toastify';
 
 function FileUpload() {
   const [file, setFile] = useState();
   const [processedData, setProcessedData] = useState(() => {
-    const storedProcessedData = JSON.parse(localStorage.getItem("fileData"));
+    const storedProcessedData = JSON.parse(localStorage.getItem('fileData'));
     return storedProcessedData || [];
   });
-  const [source, setSource] = useState("PaymentUS");
+  const [source, setSource] = useState('PaymentUS');
   const [checkedRows, setCheckedRows] = useState({});
   const [cashOnly, setCashOnly] = useState({});
   const [abpRemoval, setAbpRemoval] = useState({});
@@ -27,7 +27,7 @@ function FileUpload() {
   const handleFileUpload = () => {
     // Check if file is selected
     if (!file) {
-      console.error("No file selected.");
+      console.error('No file selected.');
       return;
     }
 
@@ -42,9 +42,9 @@ function FileUpload() {
         skipEmptyLines: true,
         complete: function (result) {
           // Set user data and process it based on source
-          if (source === "PaymentUS") {
+          if (source === 'PaymentUS') {
             handleResultsPaymentus(result.data);
-          } else if (source === "PayPoint") {
+          } else if (source === 'PayPoint') {
             handleResultsPaypoint(result.data);
           }
         },
@@ -57,43 +57,45 @@ function FileUpload() {
   // Function to generate and copy text based on account data
   const handleCopyText = (row) => {
     let text = `Returned ${
-      source === "PaymentUS" ? "PaymentUS" : "ACH"
+      source === 'PaymentUS' ? 'PaymentUS' : 'ACH'
     } Payment - ${row.paymentStatus} - Made via ${
-      source === "PaymentUS" ? "DSS/Agent Dashboard" : "IVR"
+      source === 'PaymentUS' ? 'DSS/Agent Dashboard' : 'IVR'
     }`;
     if (cashOnly[row.key]) {
       text +=
-        "\nCUSTOMER PLACED ON CASH ONLY STATUS DUE TO MULTIPLE RETURNED PAYMENTS";
+        '\nCUSTOMER PLACED ON CASH ONLY STATUS DUE TO MULTIPLE RETURNED PAYMENTS';
     }
     if (abpRemoval[row.key]) {
-      text += "\nCUSTOMER REMOVED FROM ABP";
+      text += '\nCUSTOMER REMOVED FROM ABP';
     }
     navigator.clipboard.writeText(text).then(() => {
-      console.log("Text copied to clipboard:", text);
+      console.log('Text copied to clipboard:', text);
     });
   };
 
   const handleResultsPaypoint = (data) => {
-    console.log("Handling PayPoint data:", data); // Log PayPoint data
+    console.log('Handling PayPoint data:', data); // Log PayPoint data
     const processedData = data.map((row) => {
-      const confirmationNumber = row["Confirmation #"].substring(
+      const confirmationNumber = row['Confirmation #'].substring(
         2,
-        row["Confirmation #"].length - 1
+        row['Confirmation #'].length - 1
       );
-      const amount = row["Payment Amount"];
-      const accountNumber = row["Reference"].substring(
+      const relatedPayment = row['Related Payment'];
+      const amount = row['Payment Amount'];
+      const accountNumber = row['Reference'].substring(
         2,
-        row["Reference"].length - 2
+        row['Reference'].length - 2
       );
-      const customerName = row["First Name"] + " " + row["Last Name"];
-      const paymentDate = new Date(row["Payment Timestamp"]);
-      const paymentType = row["Account Type Code"];
-      const paymentMethod = row["Payment Medium"];
-      const paymentStatus = row["ACH Return Code"];
+      const customerName = row['First Name'] + ' ' + row['Last Name'];
+      const paymentDate = new Date(row['Payment Timestamp']);
+      const paymentType = row['Account Type Code'];
+      const paymentMethod = row['Payment Medium'];
+      const paymentStatus = row['ACH Return Code'];
       const key = `${confirmationNumber}`;
 
       return {
         confirmationNumber,
+        relatedPayment,
         amount,
         accountNumber,
         customerName,
@@ -105,25 +107,27 @@ function FileUpload() {
       };
     });
     setProcessedData(processedData);
-    localStorage.setItem("fileData", JSON.stringify(processedData));
+    localStorage.setItem('fileData', JSON.stringify(processedData));
   };
 
   const handleResultsPaymentus = (data) => {
-    console.log("Handling PaymentUS data:", data); // Log PaymentUS data
+    console.log('Handling PaymentUS data:', data); // Log PaymentUS data
     const processedData = data.map((row) => {
-      const confirmationNumber = row["Confirmation Number"];
-      const amount = row["Payment Amount"];
-      const accountNumber = row["Account Number"];
+      const confirmationNumber = row['Confirmation Number'];
+      const relatedPayment = row['Related Payment'];
+      const amount = row['Payment Amount'];
+      const accountNumber = row['Account Number'];
       const customerName =
-        row["Customer First Name"] + " " + row["Customer Last Name"];
-      const paymentDate = new Date(row["Payment Date/Time"]);
-      const paymentType = row["Payment Method Type"];
-      const paymentMethod = row["Payment Method"];
-      const paymentStatus = row["Status Description"];
+        row['Customer First Name'] + ' ' + row['Customer Last Name'];
+      const paymentDate = new Date(row['Payment Date/Time']);
+      const paymentType = row['Payment Method Type'];
+      const paymentMethod = row['Payment Method'];
+      const paymentStatus = row['Status Description'];
       const key = `${confirmationNumber}`;
 
       return {
         confirmationNumber,
+        relatedPayment,
         amount,
         accountNumber,
         customerName,
@@ -135,7 +139,7 @@ function FileUpload() {
       };
     });
     setProcessedData(processedData);
-    localStorage.setItem("fileData", JSON.stringify(processedData));
+    localStorage.setItem('fileData', JSON.stringify(processedData));
   };
 
   const handleCheckboxChange = (key) => {
@@ -171,16 +175,16 @@ function FileUpload() {
     });
 
     // Join account numbers
-    const accountNumbersText = accountNumbers.join("\n");
+    const accountNumbersText = accountNumbers.join('\n');
 
     // Copy to clipboard
     navigator.clipboard.writeText(accountNumbersText).then(() => {
-      console.log("Account numbers copied to clipboard:", accountNumbersText);
+      console.log('Account numbers copied to clipboard:', accountNumbersText);
     });
   };
 
   const transferAccountNumbers = async () => {
-    console.log("Transfer function called");
+    console.log('Transfer function called');
     const remainingAccounts = [];
     const newAccountNumbers = [];
 
@@ -197,23 +201,23 @@ function FileUpload() {
     if (newAccountNumbers.length > 0) {
       await addMultipleAccounts(newAccountNumbers);
     }
-    console.log("All accounts added");
+    console.log('All accounts added');
     setProcessedData(remainingAccounts);
     setCheckedRows({});
 
-    localStorage.setItem("fileData", JSON.stringify(remainingAccounts));
-    console.log("Updated fileData in localStorage: ", remainingAccounts);
+    localStorage.setItem('fileData', JSON.stringify(remainingAccounts));
+    console.log('Updated fileData in localStorage: ', remainingAccounts);
   };
 
   const clearData = () => {
     setProcessedData([]);
-    localStorage.setItem("fileData", JSON.stringify([]));
+    localStorage.setItem('fileData', JSON.stringify([]));
   };
 
   const copyAccountNumber = (accountNumber) => {
     navigator.clipboard.writeText(accountNumber).then(() => {
-      toast.success("Account number copied to clipboard!", {
-        position: "top-right",
+      toast.success('Account number copied to clipboard!', {
+        position: 'top-right',
         autoClose: 2000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -225,7 +229,7 @@ function FileUpload() {
   };
 
   useEffect(() => {
-    const storedData = JSON.parse(localStorage.getItem("fileData"));
+    const storedData = JSON.parse(localStorage.getItem('fileData'));
     if (storedData) {
       setProcessedData(storedData);
     }
@@ -267,7 +271,7 @@ function FileUpload() {
           id="paymentus"
           value="PaymentUS"
           onChange={onOptionChange}
-          checked={source === "PaymentUS"}
+          checked={source === 'PaymentUS'}
         />
         <label className="form-check-label" htmlFor="paymentus">
           PaymentUS File
@@ -281,7 +285,7 @@ function FileUpload() {
           id="paypoint"
           value="PayPoint"
           onChange={onOptionChange}
-          checked={source === "PayPoint"}
+          checked={source === 'PayPoint'}
         />
         <label className="form-check-label" htmlFor="paypoint">
           PayPoint File
@@ -293,12 +297,14 @@ function FileUpload() {
           <table className="table table-striped">
             <thead>
               <tr>
-                <th>Completed Status</th>
+                <th width="5%">Completed Status</th>
                 <th>Account Number</th>
 
                 <th>Payment Amount</th>
-                <th>Confirmation Number</th>
-
+                <th width="20%">
+                  <div>Confirmation Number</div>
+                  <div>(Related Payment)</div>
+                </th>
                 <th>Customer Name</th>
                 <th>Payment Date</th>
                 <th>Payment Type</th>
@@ -313,7 +319,7 @@ function FileUpload() {
               {processedData.map((row, index) => (
                 <tr
                   key={index}
-                  className={checkedRows[row.key] ? "table-success" : ""}
+                  className={checkedRows[row.key] ? 'table-success' : ''}
                 >
                   <td>
                     <input
@@ -326,13 +332,16 @@ function FileUpload() {
                   <td>
                     <span
                       onClick={() => copyAccountNumber(row.accountNumber)}
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: 'pointer' }}
                     >
                       {row.accountNumber}
                     </span>
                   </td>
                   <td>{row.amount}</td>
-                  <td>{row.confirmationNumber}</td>
+                  <td>
+                    <div>{row.confirmationNumber}</div>
+                    <div> ({row.relatedPayment})</div>
+                  </td>
                   <td>{row.customerName}</td>
                   <td>
                     {row.paymentDate instanceof Date
@@ -362,7 +371,7 @@ function FileUpload() {
                     <button
                       className="btn custom-btn-blue btn-sm"
                       onClick={() => handleCopyText(row)}
-                      style={{ padding: ".25rem .5rem", fontSize: ".75rem" }}
+                      style={{ padding: '.25rem .5rem', fontSize: '.75rem' }}
                     >
                       Customer Contact
                     </button>
