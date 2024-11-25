@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { auth } from './firebase'; // Import the auth object
-import { useNavigate } from 'react-router-dom';
-import '../CustomColors.css';
+import React, { useState } from "react";
+import { auth } from "./firebase"; // Import the auth object
+import { useNavigate, Link } from "react-router-dom";
+import "../CustomColors.css";
 
 const SignIn = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -13,7 +13,7 @@ const SignIn = () => {
     e.preventDefault();
     try {
       await auth.signInWithEmailAndPassword(email, password);
-      navigate('/'); // Redirect to the default route after successful sign-in
+      navigate("/"); // Redirect to the default route after successful sign-in
     } catch (error) {
       setError(error.message); // Handle sign-in errors
     }
@@ -22,10 +22,10 @@ const SignIn = () => {
     <div className="d-flex justify-content-center align-items-center ">
       <div
         className="card p-4"
-        style={{ maxWidth: '400px', width: '100%', borderRadius: '10px' }}
+        style={{ maxWidth: "400px", width: "100%", borderRadius: "10px" }}
       >
         <h3 className="text-center mb-4">Sign In</h3>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
         <form onSubmit={handleSignIn}>
           <div className="mb-3">
             <label htmlFor="email" className="form-label">
@@ -62,6 +62,9 @@ const SignIn = () => {
             Sign In
           </button>
         </form>
+        <div>
+          <Link to="/reset-password">Forgot Password?</Link>
+        </div>
       </div>
     </div>
   );

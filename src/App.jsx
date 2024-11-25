@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Navbar from './Navbar';
-import Home from './Home';
-import BillingHistory from './BillingVisualizer/BillingHistory';
-import FileUpload from './Returns/FileUpload';
-import TaskList from './Tasks/TaskList';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import WorkOrderTracker from './WorkOrders/WorkOrderTracker';
-import ReturnTrackerMain from './Returns/ReturnTrackerMain';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import VeeCalulatorMain from './VEE/VeeCalculatorMain';
-import EmailParser from './EmailParser/EmailParser';
-import LoginPage from './Authentication/LoginPage';
-import { auth } from './Authentication/firebase';
-import ProtectedRoute from './Authentication/ProtectedRoute';
-import SignIn from './Authentication/SignIn';
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Navbar from "./Navbar";
+import Home from "./Home";
+import BillingHistory from "./BillingVisualizer/BillingHistory";
+import FileUpload from "./Returns/FileUpload";
+import TaskList from "./Tasks/TaskList";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import WorkOrderTracker from "./WorkOrders/WorkOrderTracker";
+import ReturnTrackerMain from "./Returns/ReturnTrackerMain";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import VeeCalulatorMain from "./VEE/VeeCalculatorMain";
+import EmailParser from "./EmailParser/EmailParser";
+import { auth } from "./Authentication/firebase";
+import ProtectedRoute from "./Authentication/ProtectedRoute";
+import SignIn from "./Authentication/SignIn";
+import PasswordReset from "./Authentication/PasswordReset";
+import SessionTimeoutHandler from "./Authentication/SessionTimeoutHandler";
+
 const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,7 @@ const App = () => {
     <Router>
       <div>
         <Navbar user={user} />
+        {user && <SessionTimeoutHandler />} {/* Add session timeout handler */}
         <div className="container mt-4">
           <Routes>
             <Route
@@ -100,7 +103,8 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/login" element={<SignIn />} />
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/reset-password" element={<PasswordReset />} />
           </Routes>
           <ToastContainer />
         </div>
