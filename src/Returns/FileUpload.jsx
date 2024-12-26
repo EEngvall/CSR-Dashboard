@@ -14,6 +14,7 @@ function FileUpload() {
   const [checkedRows, setCheckedRows] = useState({});
   const [cashOnly, setCashOnly] = useState({});
   const [abpRemoval, setAbpRemoval] = useState({});
+  const [sortOrder, setSortOrder] = useState("mostRecent"); // Default sorting order
   const { addMultipleAccounts } = useAccounts(); // Destructure the addAccount function from the hook
 
   const onOptionChange = (e) => {
@@ -147,6 +148,14 @@ function FileUpload() {
     setProcessedData(processedData);
     localStorage.setItem("fileData", JSON.stringify(processedData));
   };
+
+  const sortedData = [...processedData].sort((a, b) => {
+    if (sortOrder === "mostRecent") {
+      return new Date(b.paymentDate) - new Date(a.paymentDate);
+    } else {
+      return new Date(a.paymentDate) - new Date(b.paymentDate);
+    }
+  });
 
   const handleCheckboxChange = (key) => {
     setCheckedRows((prevState) => {
@@ -297,10 +306,24 @@ function FileUpload() {
           PayPoint File
         </label>
       </div>
+      <div className="mb-3">
+        <label htmlFor="sortOrder" className="form-label">
+          Sort by Payment Date:
+        </label>
+        <select
+          id="sortOrder"
+          className="form-select"
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+        >
+          <option value="mostRecent">Most Recent</option>
+          <option value="oldest">Oldest</option>
+        </select>
+      </div>
 
       <div>
         <h5>Remaining Items: {processedData.length}</h5>
-        {processedData && processedData.length > 0 && (
+        {sortedData.length > 0 && (
           <table className="table table-striped">
             <thead>
               <tr>
