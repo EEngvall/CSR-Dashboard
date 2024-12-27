@@ -246,7 +246,11 @@ function FileUpload() {
   useEffect(() => {
     const storedData = JSON.parse(localStorage.getItem("fileData"));
     if (storedData) {
-      setProcessedData(storedData);
+      const parsedData = storedData.map((row) => ({
+        ...row,
+        paymentDate: new Date(row.paymentDate), // Convert paymentDate back to a Date object
+      }));
+      setProcessedData(parsedData);
     }
   }, []);
 
