@@ -306,30 +306,30 @@ function FileUpload() {
           PayPoint File
         </label>
       </div>
-      <div className="mb-3">
-        <label htmlFor="sortOrder" className="form-label">
-          Sort by Payment Date:
-        </label>
-        <select
-          id="sortOrder"
-          className="form-select"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-        >
-          <option value="mostRecent">Most Recent</option>
-          <option value="oldest">Oldest</option>
-        </select>
-      </div>
 
       <div>
         <h5>Remaining Items: {processedData.length}</h5>
+        <div className="mb-3">
+          <label htmlFor="sortOrder" className="form-label">
+            Sort by Payment Date:
+          </label>
+          <select
+            id="sortOrder"
+            className="form-select"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          >
+            <option value="mostRecent">Most Recent</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+
         {sortedData.length > 0 && (
           <table className="table table-striped">
             <thead>
               <tr>
                 <th width="5%">Completed Status</th>
                 <th>Account Number</th>
-
                 <th>Payment Amount</th>
                 <th width="20%">
                   <div>Confirmation Number</div>
@@ -346,7 +346,7 @@ function FileUpload() {
               </tr>
             </thead>
             <tbody>
-              {processedData.map((row, index) => (
+              {sortedData.map((row, index) => (
                 <tr
                   key={index}
                   className={checkedRows[row.key] ? "table-success" : ""}
